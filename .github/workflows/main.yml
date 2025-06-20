@@ -14,7 +14,7 @@ jobs:
     # 작업이 실행될 환경을 지정합니다.
     runs-on: ubuntu-latest
 
-    # [수정됨] 워크플로우에 필요한 권한을 명시적으로 부여합니다.
+    # 워크플로우에 필요한 권한을 명시적으로 부여합니다.
     permissions:
       contents: read
       pages: write
@@ -22,9 +22,9 @@ jobs:
 
     # 작업의 단계(Steps)들을 정의합니다.
     steps:
-      # 1. 저장소의 코드를 다운로드합니다.
+      # 1. 저장소의 코드를 다운로드합니다. (최신 버전 v4 사용)
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       # 2. [가장 중요] index.html 파일의 placeholder를 Secret 값으로 교체합니다.
       - name: Replace Firebase Config
@@ -33,17 +33,17 @@ jobs:
         # `sed` 명령어는 파일 내의 특정 문자열을 찾아 다른 문자열로 바꿔주는 리눅스 명령어입니다.
         # `__firebase_config` 라는 문자열을 찾아 GitHub Secrets에 저장된 FIREBASE_CONFIG 값으로 교체합니다.
         
-      # 3. GitHub Pages가 사용할 수 있도록 결과물을 패키징합니다.
+      # 3. GitHub Pages가 사용할 수 있도록 결과물을 패키징합니다. (최신 버전 v5 사용)
       - name: Setup Pages
-        uses: actions/setup-pages@v3
+        uses: actions/setup-pages@v5
         
-      # 4. 패키징된 결과물을 업로드합니다.
+      # 4. 패키징된 결과물을 업로드합니다. (최신 버전 v3 사용)
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v2
+        uses: actions/upload-pages-artifact@v3
         with:
           path: '.'
           
-      # 5. 최종 결과물을 GitHub Pages에 배포합니다.
+      # 5. 최종 결과물을 GitHub Pages에 배포합니다. (최신 버전 v4 사용)
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
