@@ -208,7 +208,7 @@
         let db, auth;
         let mediaCollectionRef;
         const ALLOWED_DOMAIN = "dfirst-inc.com";
-        const ADMIN_EMAIL = "digitalfirst.sp@gmail.com"; // [수정됨] 관리자 이메일 상수 추가
+        const ADMIN_EMAIL = "digitalfirst.sp@gmail.com"; 
 
         // --- 데이터 처리 및 UI 렌더링 함수 (변경 없음) ---
         function processExcelData(rawData) {
@@ -323,12 +323,18 @@
                 auth = getAuth(app);
                 mediaCollectionRef = collection(db, `artifacts/${appId}/public/data/mediaPocData`);
 
-                // [수정됨] 인증 상태 확인 로직 변경
                 onAuthStateChanged(auth, (user) => {
-                    const isCompanyUser = user && user.email.endsWith(`@${ALLOWED_DOMAIN}`);
-                    const isAdmin = user && user.email === ADMIN_EMAIL;
+                    // [수정됨] 허용된 사용자인지 확인하는 로직을 함수로 분리하여 명확하게 만듦
+                    function isUserAuthorized(userObject) {
+                        if (!userObject || !userObject.email) {
+                            return false;
+                        }
+                        const isCompanyUser = userObject.email.endsWith(`@${ALLOWED_DOMAIN}`);
+                        const isAdmin = userObject.email === ADMIN_EMAIL;
+                        return isCompanyUser || isAdmin;
+                    }
 
-                    if (user && (isCompanyUser || isAdmin)) {
+                    if (isUserAuthorized(user)) {
                         // 로그인 성공 및 허용된 사용자
                         loginScreen.style.display = 'none';
                         mainContent.style.display = 'block';
@@ -523,3 +529,4 @@
     </script>
 </body>
 </html>
+
