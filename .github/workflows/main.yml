@@ -1,0 +1,42 @@
+# GitHub Actions 워크플로우 이름
+name: Build and Deploy to GitHub Pages
+
+# 언제 이 Action을 실행할지 결정합니다.
+# main 브랜치에 코드가 push(업로드)될 때마다 실행됩니다.
+on:
+  push:
+    branches: [ "main" ]
+
+# 실행될 작업(Job)들을 정의합니다.
+jobs:
+  # 빌드 및 배포 작업
+  build-and-deploy:
+    # 작업이 실행될 환경을 지정합니다.
+    runs-on: ubuntu-latest
+    # 작업의 단계(Steps)들을 정의합니다.
+    steps:
+      # 1. 저장소의 코드를 다운로드합니다.
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      # 2. [가장 중요] index.html 파일의 placeholder를 Secret 값으로 교체합니다.
+      - name: Replace Firebase Config
+        run: |
+          sed -i 's|`__firebase_config`|${{ secrets.FIREBASE_CONFIG }}|g' index.html
+        # `sed` 명령어는 파일 내의 특정 문자열을 찾아 다른 문자열로 바꿔주는 리눅스 명령어입니다.
+        # `__firebase_config` 라는 문자열을 찾아 GitHub Secrets에 저장된 FIREBASE_CONFIG 값으로 교체합니다.
+        
+      # 3. GitHub Pages가 사용할 수 있도록 결과물을 패키징합니다.
+      - name: Setup Pages
+        uses: actions/setup-pages@v3
+        
+      # 4. 패키징된 결과물을 업로드합니다.
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v2
+        with:
+          path: '.'
+          
+      # 5. 최종 결과물을 GitHub Pages에 배포합니다.
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
