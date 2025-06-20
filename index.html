@@ -91,7 +91,7 @@
     
     <!-- 메인 콘텐츠 영역 -->
     <div id="main-content">
-        <!-- [수정됨] 사용자 정보 컨테이너를 메인 콘텐츠의 최상위로 이동 -->
+        <!-- 사용자 정보 컨테이너를 메인 콘텐츠의 최상위로 이동 -->
         <div id="user-info-container" class="fixed right-8 top-8 z-50 flex items-center gap-3">
              <!-- 사용자 정보가 여기에 동적으로 추가됩니다. -->
         </div>
@@ -204,7 +204,7 @@
         import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, doc, addDoc, getDocs, deleteDoc, updateDoc, onSnapshot, writeBatch } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // 모든 로직을 DOMContentLoaded 이벤트 리스너 안으로 이동
+        // [수정됨] 모든 로직을 DOMContentLoaded 이벤트 리스너 안으로 이동
         document.addEventListener('DOMContentLoaded', () => {
 
             // --- 전역 변수 ---
