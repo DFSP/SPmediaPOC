@@ -184,6 +184,714 @@
         let currentFilteredData = []; // 현재 필터링된 데이터
         let db, auth; // Firebase 인스턴스
         let mediaCollectionRef; // Firebase 컬렉션 참조
+        
+        // --- 데이터 처리 및 UI 렌더링 함수 ---
+
+        // 엑셀 원본 데이터를 가공하는 함수
+        function processExcelData(rawData) {
+            return rawData.map(row => {
+                const safeRow = (typeof row === 'object' && row !== null) ? row : {};
+                return {
+                    ...safeRow,
+                    카테고리: (safeRow.카테고리 && typeof safeRow.카테고리 === 'string') 
+                            ? safeRow.카테고리.split(',').map(cat => cat.trim()).filter(Boolean) 
+                            : (Array.isArray(safeRow.카테고리) ? safeRow.카테고리 : [])
+                };
+            });
+        }
+
+        // Firebase에서 데이터를 가져온 후 UI를 초기화하고 업데이트하는 함수
+        function initializeUIWithData(data) {
+            mediaData = data;
+            populateCategories();
+            updateSearchPlaceholder();
+            filterAndRender();
+        }
+        
+        function updateSearchPlaceholder() {
+            const searchBox = document.getElementById('search-box');
+            if (mediaData.length > 0) {
+                const exampleMedia = mediaData[0]?.매체명 || '';
+                const examplePoc = mediaData[0]?.담당자 || '';
+                let placeholderText = '예: ';
+                if (exampleMedia) placeholderText += `${exampleMedia}`;
+                if (examplePoc) placeholderText += `${exampleMedia ? ', ' : ''}${examplePoc}`;
+                searchBox.placeholder = placeholderText === '예: ' ? '매체명 또는 담당자 검색...' : placeholderText + '...';
+            } else {
+                searchBox.placeholder = '데이터가 없습니다. 엑셀 파일을 업로드해주세요.';
+            }
+        }
+
+        function populateCategories() {
+            const categoryTagsContainer = document.getElementById('category-tags-container');
+            const activeCategories = new Set(
+                Array.from(categoryTagsContainer.querySelectorAll('.bg-blue-600, .dark\\:bg-blue-500'))
+                    .map(tag => tag.dataset.category)
+            );
+
+            categoryTagsContainer.innerHTML = '';
+            const allCategories = new Set(mediaData.flatMap(item => item.카테고리).filter(Boolean));
+            const sortedCategories = [...allCategories].sort((a,b) => a.localeCompare(b, 'ko'));
+            
+            sortedCategories.forEach(category => {
+                const button = document.createElement('button');
+                if (activeCategories.has(category)) {
+                    button.className = 'category-tag px-3 py-1.5 rounded-full text-sm font-semibold bg-blue-600 dark:bg-blue-500 text-white dark:text-white';
+                } else {
+                    button.className = 'category-tag px-3 py-1.5 rounded-full text-sm font-semibold bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600';
+                }
+                button.textContent = category;
+                button.dataset.category = category;
+                categoryTagsContainer.appendChild(button);
+            });
+        }
+
+        function renderMedia(data) {
+            const mediaList = document.getElementById('media-list');
+            const noResults = document.getElementById('no-results');
+            const copyAllContainer = document.getElementById('copy-all-container');
+            
+            // [수정됨] 새 카드 추가 시 화면 상단에 임시 카드가 있을 수 있으므로, 해당 카드는 그대로 둡니다.
+            const newCard = document.querySelector('[data-is-new="true"]');
+            
+            mediaList.innerHTML = ''; // 기존 목록 초기화
+            if (newCard) {
+                mediaList.appendChild(newCard); // 임시 카드가 있다면 다시 추가
+            }
+
+            noResults.classList.toggle('hidden', mediaData.length > 0 || newCard);
+            if(data.length === 0 && mediaData.length > 0) {
+                 noResults.classList.remove('hidden');
+            } else if(mediaData.length === 0 && !newCard) {
+                noResults.classList.remove('hidden');
+            }
+
+            copyAllContainer.classList.toggle('hidden', data.length === 0);
+
+            data.forEach(item => {
+                const card = document.createElement('div');
+                card.id = `card-${item.id}`;
+                card.className = 'bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 flex flex-col transition-transform transform hover:-translate-y-1 transition-colors duration-300';
+                card.innerHTML = generateCardView(item);
+                mediaList.appendChild(card);
+            });
+        }
+        
+        function generateCardView(item) {
+            const categoryTagsHtml = (item.카테고리 || []).map(cat => 
+                `<span class="text-xs font-semibold text-blue-800 bg-blue-100 dark:text-gray-200 dark:bg-gray-600 px-2 py-1 rounded-full">${cat}</span>`
+            ).join('');
+
+            let infoHtml = '';
+            const createRow = (label, value, clipValue) => {
+                if (!value) return '';
+                const copyButton = clipValue ? `<button class="copy-button ml-auto shrink-0" data-clipboard="${clipValue}" aria-label="${label} 복사"><svg class="w-5 h-5 text-gray-400 hover:text-blue-600 dark:text-gray-500 dark:hover:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg></button>` : '';
+                return `<div class="flex items-center gap-2"><span class="font-semibold text-gray-500 dark:text-gray-400 w-20 shrink-0">${label}</span><div class="hover-scroll-container flex-grow min-w-0"><span class="truncate block">${value}</span></div>${copyButton}</div>`;
+            };
+
+            const contactPerson = item.담당자 ? `${item.담당자}${item.직책 ? ` / ${item.직책}` : ''}` : '';
+            infoHtml += createRow('담당자', contactPerson);
+            infoHtml += createRow('이메일', item.이메일, item.이메일);
+            infoHtml += createRow('팀메일', item.팀메일, item.팀메일);
+            infoHtml += createRow('연락처', item.연락처, item.연락처);
+            infoHtml += createRow('판매 대행사', item['판매 대행사'], item['판매 대행사']);
+            
+            const introButtonHtml = item['소개서URL']
+                ? `<a href="${item['소개서URL']}" target="_blank" rel="noopener noreferrer" class="w-full text-center block bg-blue-600 text-white font-semibold text-sm py-2 px-4 rounded-lg hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 transition-colors">소개서 다운로드</a>`
+                : `<button class="w-full text-center block bg-gray-300 dark:bg-gray-700 text-gray-500 dark:text-gray-400 font-semibold text-sm py-2 px-4 rounded-lg cursor-not-allowed" disabled>소개서 없음</button>`;
+            
+            return `
+                <div class="flex justify-between items-start gap-2 mb-4">
+                    <h2 class="text-xl font-bold text-gray-800 dark:text-gray-100 break-words" title="${item.매체명 || ''}">${item.매체명 || ''}</h2>
+                    <div class="flex flex-col items-end space-y-1 flex-shrink-0">
+                        <button data-action="edit" data-id="${item.id}" class="text-xs text-gray-400 hover:text-blue-600 dark:text-gray-500 dark:hover:text-blue-400">수정</button>
+                        <button data-action="delete" data-id="${item.id}" class="text-xs text-red-500 hover:text-red-700 dark:hover:text-red-400">삭제</button>
+                    </div>
+                </div>
+                <div class="flex-grow">
+                    <div class="flex flex-wrap gap-2 mb-4">${categoryTagsHtml}</div>
+                    <div class="space-y-3 text-sm text-gray-700 dark:text-gray-300">${infoHtml}</div>
+                </div>
+                 <div class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                     ${introButtonHtml}
+                 </div>
+            `;
+        }
+        
+        function generateCardEditView(item) {
+            const createInput = (name, label, value) => `
+                <div class="mb-2">
+                    <label class="block text-xs font-medium text-gray-500 dark:text-gray-400">${label}</label>
+                    <input type="text" name="${name}" value="${value || ''}" class="edit-input">
+                </div>
+            `;
+            
+            return `
+                <form data-id="${item.id || ''}">
+                    ${createInput('매체명', '매체명', item.매체명)}
+                    ${createInput('카테고리', '카테고리 (쉼표로 구분)', (item.카테고리 || []).join(', '))}
+                    ${createInput('담당자', '담당자', item.담당자)}
+                    ${createInput('직책', '직책', item.직책)}
+                    ${createInput('이메일', '이메일', item.이메일)}
+                    ${createInput('팀메일', '팀메일', item.팀메일)}
+                    ${createInput('연락처', '연락처', item.연락처)}
+                    ${createInput('판매 대행사', '판매 대행사', item['판매 대행사'])}
+                    ${createInput('소개서URL', '소개서URL', item['소개서URL'])}
+                    <div class="flex justify-end gap-2 mt-4">
+                        <button type="button" data-action="cancel" data-id="${item.id || ''}" class="px-3 py-1 text-sm rounded-md bg-gray-200 hover:bg-gray-300 dark:bg-gray-600 dark:hover:bg-gray-500 dark:text-gray-200">취소</button>
+                        <button type="button" data-action="save" data-id="${item.id || ''}" class="px-3 py-1 text-sm rounded-md bg-blue-600 text-white hover:bg-blue-700">저장</button>
+                    </div>
+                </form>
+            `;
+        }
+        
+        function filterAndRender() {
+            const searchBox = document.getElementById('search-box');
+            const categoryTagsContainer = document.getElementById('category-tags-container');
+            
+            const searchTerm = searchBox.value.toLowerCase().trim();
+            const selectedCategoryNodes = categoryTagsContainer.querySelectorAll('.bg-blue-600, .dark\\:bg-blue-500');
+            const selectedCategories = Array.from(selectedCategoryNodes).map(node => node.dataset.category);
+            
+            const filteredData = mediaData.filter(item => {
+                const matchesSearch = (item.매체명 || '').toLowerCase().includes(searchTerm) || 
+                                      (item.담당자 || '').toLowerCase().includes(searchTerm);
+
+                if (selectedCategories.length === 0) {
+                    return matchesSearch;
+                }
+
+                const matchesCategory = selectedCategories.some(cat => (item.카테고리 || []).includes(cat));
+
+                return matchesSearch && matchesCategory;
+            });
+            
+            currentFilteredData = filteredData;
+            renderMedia(filteredData);
+        }
+
+        function copyTextToClipboard(textToCopy) {
+            const textArea = document.createElement("textarea");
+            textArea.value = textToCopy;
+            textArea.style.position = 'fixed';
+            textArea.style.top = '-9999px';
+            textArea.style.left = '-9999px';
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            let success = false;
+            try {
+                success = document.execCommand('copy');
+            } catch (err) {
+                success = false;
+            }
+            document.body.removeChild(textArea);
+            return success;
+        }
+        
+        function showToast(message, type = 'success') {
+            const toastContainer = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            const bgColor = type === 'success' ? 'bg-green-500' : 'bg-red-500';
+            toast.className = `${bgColor} text-white text-sm font-semibold py-2 px-4 rounded-lg shadow-lg toast-notification opacity-0 transform translate-y-2`;
+            toast.textContent = message;
+            toastContainer.appendChild(toast);
+            setTimeout(() => {
+                toast.classList.remove('opacity-0', 'translate-y-2');
+                toast.classList.add('opacity-100', 'transform-none');
+            }, 10);
+            
+            setTimeout(() => {
+                toast.classList.add('opacity-0');
+                setTimeout(() => {
+                    toast.remove();
+                }, 500);
+            }, 2000);
+        }
+
+        // --- Firebase 관련 함수 ---
+
+        async function uploadDataToFirebase(dataToUpload) {
+            showToast('데이터를 Firebase에 업로드 중입니다...', 'success');
+            try {
+                const existingDocs = await getDocs(mediaCollectionRef);
+                const deleteBatch = writeBatch(db);
+                existingDocs.forEach(doc => {
+                    deleteBatch.delete(doc.ref);
+                });
+                await deleteBatch.commit();
+
+                const addBatch = writeBatch(db);
+                dataToUpload.forEach(item => {
+                    const docRef = doc(mediaCollectionRef);
+                    addBatch.set(docRef, item);
+                });
+                await addBatch.commit();
+                
+                showToast(`${dataToUpload.length}개의 데이터를 성공적으로 업로드했습니다.`, 'success');
+            } catch (error) {
+                console.error("Firebase 업로드 오류:", error);
+                showToast("Firebase에 데이터를 업로드하는 중 오류가 발생했습니다.", "error");
+            }
+        }
+
+
+        // --- 이벤트 리스너 설정 ---
+        document.addEventListener('DOMContentLoaded', async () => {
+            const excelUpload = document.getElementById('excel-upload');
+            const fileNameSpan = document.getElementById('file-name');
+            const searchBox = document.getElementById('search-box');
+            const categoryTagsContainer = document.getElementById('category-tags-container');
+            const mediaList = document.getElementById('media-list');
+            const copyAllButton = document.getElementById('copy-all-button');
+            const addNewCardButton = document.getElementById('add-new-card-button');
+            const scrollTopBtn = document.getElementById('scroll-to-top');
+            const scrollBottomBtn = document.getElementById('scroll-to-bottom');
+
+            try {
+                // 이 부분은 배포 시 GitHub Actions에 의해 실제 firebaseConfig 객체로 자동 교체됩니다.
+                const firebaseConfig = __firebase_config;
+                const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+
+                // JSON.parse()를 제거하고 바로 객체를 사용합니다.
+                const app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+                
+                mediaCollectionRef = collection(db, `artifacts/${appId}/public/data/mediaPocData`);
+
+                // 익명 또는 커스텀 토큰으로 로그인
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+                
+                showToast("Firebase에 성공적으로 연결되었습니다.", "success");
+
+                // [수정됨] onSnapshot 로직 단순화: 항상 정렬만 담당
+                onSnapshot(mediaCollectionRef, (querySnapshot) => {
+                    let snapshotData = querySnapshot.docs.map(doc => ({
+                        id: doc.id,
+                        ...doc.data()
+                    }));
+                    
+                    snapshotData.sort((a, b) => {
+                        const nameA = a.매체명 || '';
+                        const nameB = b.매체명 || '';
+                        return nameA.localeCompare(nameB, 'ko');
+                    });
+                    
+                    initializeUIWithData(snapshotData);
+
+                    if (querySnapshot.metadata.hasPendingWrites) {
+                        // 로컬 변경사항으로 인한 업데이트일 경우, 중복 알림을 피합니다.
+                    } else if (auth.currentUser && !auth.currentUser.isAnonymous) {
+                         // 초기 로딩이 아닐 때만 업데이트 알림을 표시
+                        showToast("데이터가 실시간으로 업데이트되었습니다.", "success");
+                    }
+                }, (error) => {
+                    console.error("실시간 데이터 감지 오류: ", error);
+                    showToast("데이터를 실시간으로 가져오는 데 실패했습니다.", "error");
+                });
+
+            } catch (e) {
+                console.error("Firebase 초기화 오류:", e);
+                showToast("Firebase 연결에 실패했습니다. 설정을 확인하세요.", "error");
+                document.getElementById('search-box').placeholder = 'Firebase 연결 실패!';
+            }
+            
+            // [수정됨] 새 항목 추가 로직: 화면에 즉시 임시 카드 생성
+            addNewCardButton.addEventListener('click', () => {
+                // 이미 임시 카드가 있다면 중복 생성 방지
+                if (document.querySelector('[data-is-new="true"]')) {
+                    showToast("먼저 작성 중인 새 항목을 저장하거나 취소해주세요.", "error");
+                    return;
+                }
+
+                const newItemData = { 매체명: '', 카테고리: [] }; // 초기 데이터
+                const tempCard = document.createElement('div');
+                tempCard.className = 'bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 flex flex-col';
+                tempCard.dataset.isNew = 'true'; // 새 카드임을 표시하는 플래그
+                tempCard.innerHTML = generateCardEditView(newItemData);
+
+                mediaList.prepend(tempCard); // 목록 맨 앞에 임시 카드 추가
+                
+                tempCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                tempCard.querySelector('input[name="매체명"]')?.focus();
+            });
+
+            excelUpload.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (!file || !db) {
+                    showToast("Firebase가 아직 연결되지 않았습니다.", "error");
+                    return;
+                };
+
+                fileNameSpan.textContent = file.name;
+                const reader = new FileReader();
+                
+                reader.onload = (event) => {
+                    try {
+                        const data = new Uint8Array(event.target.result);
+                        const workbook = XLSX.read(data, { type: 'array' });
+                        const sheetName = workbook.SheetNames[0];
+                        const worksheet = workbook.Sheets[sheetName];
+                        const jsonData = XLSX.utils.sheet_to_json(worksheet);
+                        
+                        const processedData = processExcelData(jsonData);
+                        uploadDataToFirebase(processedData);
+
+                    } catch (error) {
+                        console.error("파일 처리 중 오류 발생:", error);
+                        showToast("파일을 처리하는 중 오류가 발생했습니다. 파일 형식을 확인해주세요.", "error");
+                    }
+                };
+                
+                reader.onerror = (error) => {
+                    console.error("파일 읽기 오류:", error);
+                    showToast("파일을 읽는 데 실패했습니다.", "error");
+                };
+
+                reader.readAsArrayBuffer(file);
+            });
+
+            categoryTagsContainer.addEventListener('click', (e) => {
+                const target = e.target.closest('.category-tag');
+                if (!target) return;
+                
+                target.classList.toggle('bg-blue-600');
+                target.classList.toggle('dark:bg-blue-500');
+                target.classList.toggle('text-white');
+                target.classList.toggle('dark:text-white');
+                target.classList.toggle('bg-gray-200');
+                target.classList.toggle('dark:bg-gray-700');
+                target.classList.toggle('text-gray-700');
+                target.classList.toggle('dark:text-gray-300');
+
+                filterAndRender();
+            });
+
+            let debounceTimer;
+            searchBox.addEventListener('input', () => {
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(filterAndRender, 200);
+            });
+            
+            mediaList.addEventListener('click', async function(e) {
+                const button = e.target.closest('button');
+                if (!button) return;
+
+                const cardElement = button.closest('[id^="card-"], [data-is-new="true"]');
+                if (!cardElement) return;
+
+                if (button.classList.contains('copy-button')) {
+                    const textToCopy = button.dataset.clipboard;
+                    if (copyTextToClipboard(textToCopy)) {
+                        showToast(`'${textToCopy}' 복사 완료!`);
+                        button.innerHTML = `<svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>`;
+                        setTimeout(() => {
+                            button.innerHTML = `<svg class="w-5 h-5 text-gray-400 hover:text-blue-600 dark:text-gray-500 dark:hover:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>`;
+                        }, 1500);
+                    } else {
+                        showToast('복사에 실패했습니다.', 'error');
+                    }
+                    return;
+                }
+
+                const action = button.dataset.action;
+                const isNew = cardElement.dataset.isNew === 'true';
+                const id = isNew ? null : cardElement.id.replace('card-', '');
+                const item = isNew ? null : mediaData.find(item => item.id === id);
+                
+                if (!isNew && !item) return;
+
+                const docRef = id ? doc(db, mediaCollectionRef.path, id) : null;
+
+                if (action === 'edit') {
+                    cardElement.innerHTML = generateCardEditView(item);
+                } else if (action === 'delete') {
+                    cardElement.innerHTML = `
+                        <div class="flex flex-col items-center justify-center h-full p-4">
+                            <p class="text-sm text-gray-800 dark:text-gray-200 text-center font-semibold mb-4">정말로 삭제하시겠습니까?</p>
+                            <div class="flex space-x-2">
+                                <button type="button" data-action="cancel-delete" data-id="${id}" class="px-3 py-1 text-sm rounded-md bg-gray-200 hover:bg-gray-300 dark:bg-gray-600 dark:hover:bg-gray-500 dark:text-gray-200">취소</button>
+                                <button type="button" data-action="confirm-delete" data-id="${id}" class="px-3 py-1 text-sm rounded-md bg-red-600 text-white hover:bg-red-700">확인</button>
+                            </div>
+                        </div>
+                    `;
+                } else if (action === 'confirm-delete') {
+                    if (!docRef) return;
+                    try {
+                        await deleteDoc(docRef);
+                        showToast('삭제되었습니다.', 'success');
+                    } catch (error) {
+                        console.error("삭제 오류: ", error);
+                        showToast("삭제에 실패했습니다.", "error");
+                        if(item) cardElement.innerHTML = generateCardView(item);
+                    }
+                } else if (action === 'cancel') {
+                    if (isNew) {
+                        cardElement.remove();
+                    } else {
+                        cardElement.innerHTML = generateCardView(item);
+                    }
+                } else if (action === 'save') {
+                    const form = cardElement.querySelector('form');
+                    const formData = new FormData(form);
+                    const updatedItemData = {};
+                    
+                    for (let [key, value] of formData.entries()) {
+                        if (key === '카테고리') {
+                            updatedItemData[key] = value.split(',').map(v => v.trim()).filter(Boolean);
+                        } else {
+                            updatedItemData[key] = value;
+                        }
+                    }
+
+                    try {
+                        if (isNew) {
+                            // 새 항목 저장
+                            await addDoc(mediaCollectionRef, updatedItemData);
+                            cardElement.remove(); // 저장 후 임시 카드 제거 (onSnapshot이 새로 그려줌)
+                        } else {
+                            // 기존 항목 업데이트
+                            if (!docRef) return;
+                            await updateDoc(docRef, updatedItemData);
+                        }
+                        showToast('성공적으로 저장되었습니다.', 'success');
+                    } catch (error) {
+                        console.error("저장 오류: ", error);
+                        showToast("저장에 실패했습니다.", "error");
+                    }
+                }
+            });
+
+            copyAllButton.addEventListener('click', () => {
+                if (currentFilteredData.length === 0) {
+                    showToast('복사할 데이터가 없습니다.', 'error');
+                    return;
+                }
+                const header = "매체명\t카테고리\t담당자\t직책\t이메일\t팀메일\t연락처\t판매 대행사\t소개서URL";
+                const rows = currentFilteredData.map(item => {
+                    const categories = (item.카테고리 || []).join(', ');
+                    return [
+                        item.매체명 || '', categories, item.담당자 || '', item.직책 || '',
+                        item.이메일 || '', item.팀메일 || '', item.연락처 || '',
+                        item['판매 대행사'] || '', item['소개서URL'] || ''
+                    ].join('\t');
+                });
+                const textToCopy = [header, ...rows].join('\n');
+                
+                if(copyTextToClipboard(textToCopy)) {
+                    showToast(`${currentFilteredData.length}개 매체의 정보가 복사되었습니다!`);
+                } else {
+                     showToast('전체 복사에 실패했습니다.', 'error');
+                }
+            });
+            
+            scrollTopBtn.addEventListener('click', () => { window.scrollTo({ top: 0, behavior: 'smooth' }); });
+            scrollBottomBtn.addEventListener('click', () => { window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' }); });
+
+            window.addEventListener('scroll', () => {
+                scrollTopBtn.classList.toggle('opacity-0', window.scrollY <= 200);
+                scrollBottomBtn.classList.toggle('opacity-0', (window.innerHeight + window.scrollY) >= document.body.offsetHeight - 100);
+            });
+            
+            window.addEventListener('unhandledrejection', function(event) {
+                console.error('Unhandled Promise Rejection:', event.reason);
+                showToast('예상치 못한 오류가 발생했습니다.', 'error');
+            });
+        });
+    </script>
+</body>
+</html>
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>[SP]미디어 POC 리스트 (Firebase 실시간 연동)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- SheetJS 라이브러리 (엑셀 업로드 기능 유지를 위해 필요) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        /* Tailwind CSS를 기본으로 사용하되, 추가적인 커스텀 스타일을 적용합니다. */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;700&display=swap');
+        body {
+            font-family: 'Inter', 'Noto Sans KR', sans-serif;
+            padding-bottom: 2.5rem; /* 하단 배너 공간 확보 */
+        }
+        /* 알림 메시지 애니메이션 */
+        .toast-notification {
+            transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out;
+        }
+        /* 카테고리 태그 활성/비활성 상태 트랜지션 */
+        .category-tag {
+            transition: all 0.2s ease-in-out;
+        }
+        /* 파일 업로드 input 숨기기 */
+        input[type="file"] {
+            display: none;
+        }
+        /* 수정 모드 input 스타일 */
+        .edit-input {
+            width: 100%;
+            border: 1px solid #cbd5e1;
+            border-radius: 0.375rem;
+            padding: 0.25rem 0.5rem;
+            font-size: 0.875rem;
+            line-height: 1.25rem;
+        }
+        /* 다크모드 수정 input 스타일 */
+        .dark .edit-input {
+            background-color: #374151; /* gray-700 */
+            border-color: #4b5563;   /* gray-600 */
+            color: #e5e7eb;         /* gray-200 */
+        }
+        .edit-input:focus {
+            outline: 2px solid transparent;
+            outline-offset: 2px;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.4);
+        }
+        /* 롤링 배너 스타일 */
+        .scrolling-banner-container {
+            width: 100%;
+            overflow: hidden;
+            white-space: nowrap;
+        }
+        .scrolling-banner-content {
+            display: inline-block;
+            animation: marquee 30s linear infinite;
+        }
+        @keyframes marquee {
+            from { transform: translateX(0%); }
+            to { transform: translateX(-50%); }
+        }
+    </style>
+    <script>
+        // Tailwind CSS 다크모드 설정 (OS 설정을 따름)
+        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+          document.documentElement.classList.add('dark')
+        } else {
+          document.documentElement.classList.remove('dark')
+        }
+    </script>
+</head>
+<body class="bg-gray-100 dark:bg-gray-900 transition-colors duration-300">
+
+    <!-- 롤링 배너 (상단) -->
+    <div class="scrolling-banner-container bg-red-100 text-red-600 dark:bg-red-900/50 dark:text-red-300">
+        <div class="scrolling-banner-content py-1 text-xs font-semibold">
+            <span>디지털퍼스트 내부 배포 자료입니다. URL외부 공유 금지.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+            <span>디지털퍼스트 내부 배포 자료입니다. URL외부 공유 금지.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+            <span>디지털퍼스트 내부 배포 자료입니다. URL외부 공유 금지.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+            <span>디지털퍼스트 내부 배포 자료입니다. URL외부 공유 금지.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+        </div>
+    </div>
+
+    <div id="toast-container" class="fixed top-5 right-5 z-50"></div>
+
+    <div class="container mx-auto p-4 md:p-8 max-w-5xl">
+        <!-- 헤더 -->
+        <header class="text-center mb-8 py-8 bg-white dark:bg-gray-800 border-b-4 border-blue-600 shadow-sm rounded-t-lg transition-colors duration-300">
+            <h1 class="text-3xl md:text-4xl font-bold text-gray-800 dark:text-gray-100">[SP]미디어 POC 리스트</h1>
+            <p class="text-gray-500 dark:text-gray-400 mt-2">매체명을 검색하거나 카테고리를 선택하여 담당자 정보를 확인하세요.</p>
+        </header>
+        
+        <main>
+            <!-- 컨트롤 패널 -->
+            <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md mb-6 transition-colors duration-300">
+                <div class="mb-4">
+                    <label for="search-box" class="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-2">매체명/담당자 검색</label>
+                    <input type="text" id="search-box" class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition" placeholder="데이터베이스 연결 중...">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-2">카테고리 선택 (중복 가능)</label>
+                    <div id="category-tags-container" class="flex flex-wrap gap-2">
+                        <!-- 카테고리 태그가 동적으로 여기에 추가됩니다. -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- 신규 추가 버튼 -->
+            <div class="mb-6 text-right">
+                <button id="add-new-card-button" class="bg-blue-600 text-white font-bold text-sm py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors shadow-md inline-flex items-center">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+                    신규 추가
+                </button>
+            </div>
+
+            <!-- 결과 영역 -->
+            <div id="media-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- 매체 정보 카드가 여기에 동적으로 추가됩니다. -->
+            </div>
+            
+            <!-- 결과 없음 메시지 -->
+            <div id="no-results" class="text-center py-16 px-6 bg-white dark:bg-gray-800 rounded-xl shadow-md hidden transition-colors duration-300">
+                <svg class="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 19L13 13m-2.5-2.5A4.5 4.5 0 115.5 5.5a4.5 4.5 0 014.5 4.5zM21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                </svg>
+                <h3 class="mt-2 text-lg font-medium text-gray-800 dark:text-gray-200">데이터를 찾을 수 없습니다.</h3>
+                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Firebase에 데이터가 없거나 연결에 실패했습니다. 관리자에게 문의하세요.</p>
+            </div>
+
+            <!-- 전체 복사 버튼 컨테이너 -->
+            <div id="copy-all-container" class="mt-8 text-center hidden">
+                <button id="copy-all-button" class="bg-green-600 text-white font-bold text-sm py-2.5 px-5 rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors shadow-lg">
+                    <svg class="inline-block w-5 h-5 mr-2 -mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
+                    검색 결과 복사(paste to Excel)
+                </button>
+            </div>
+        </main>
+
+        <footer class="text-center mt-12 py-4 border-t border-gray-200 dark:border-gray-700 transition-colors duration-300">
+             <div class="mb-2">
+                 <label for="excel-upload" class="text-xs text-gray-500 dark:text-gray-400 underline cursor-pointer hover:text-gray-700 dark:hover:text-gray-300 transition-colors">
+                     데이터파일 관리(SP팀)
+                 </label>
+                 <input type="file" id="excel-upload" accept=".xlsx, .xls, .csv">
+                 <span id="file-name" class="ml-2 text-xs text-gray-500"></span>
+             </div>
+             <div>
+                 <p class="text-xs text-gray-400 dark:text-gray-500">copyright © digitalFirst All Right Reserved.</p>
+             </div>
+        </footer>
+    </div>
+
+    <!-- 페이지 이동 버튼 -->
+    <div class="fixed bottom-12 right-6 flex flex-col gap-2 z-40">
+        <button id="scroll-to-top" title="맨 위로" class="w-10 h-10 bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-full shadow-lg flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-600 transition-opacity opacity-0">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg>
+        </button>
+        <button id="scroll-to-bottom" title="맨 아래로" class="w-10 h-10 bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-full shadow-lg flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-600 transition-opacity">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+        </button>
+    </div>
+
+    <!-- 롤링 배너 (하단) -->
+    <div class="scrolling-banner-container bg-red-100 text-red-600 dark:bg-red-900/50 dark:text-red-300 fixed bottom-0 left-0 z-30">
+        <div class="scrolling-banner-content py-1 text-xs font-semibold">
+            <span>디지털퍼스트 내부 배포 자료입니다. URL외부 공유 금지.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+            <span>디지털퍼스트 내부 배포 자료입니다. URL외부 공유 금지.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+            <span>디지털퍼스트 내부 배포 자료입니다. URL외부 공유 금지.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+            <span>디지털퍼스트 내부 배포 자료입니다. URL외부 공유 금지.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+        </div>
+    </div>
+
+    <!-- Firebase SDK 추가 -->
+    <script type="module">
+        // Firebase 라이브러리 import
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, doc, addDoc, getDocs, deleteDoc, updateDoc, onSnapshot, writeBatch } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // --- 전역 변수 ---
+        let mediaData = []; // 로컬 데이터 캐시. Firebase에서 실시간으로 업데이트됩니다.
+        let currentFilteredData = []; // 현재 필터링된 데이터
+        let db, auth; // Firebase 인스턴스
+        let mediaCollectionRef; // Firebase 컬렉션 참조
         let newlyAddedItemId = null; // 새로 추가된 항목의 ID를 임시 저장하는 변수
 
         // --- 데이터 처리 및 UI 렌더링 함수 ---
