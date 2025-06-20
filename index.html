@@ -184,6 +184,7 @@
         let currentFilteredData = []; // 현재 필터링된 데이터
         let db, auth; // Firebase 인스턴스
         let mediaCollectionRef; // Firebase 컬렉션 참조
+        let newlyAddedItemId = null; // [수정됨] 새로 추가된 항목의 ID를 임시 저장하는 변수
 
         // --- 데이터 처리 및 UI 렌더링 함수 ---
 
@@ -442,17 +443,18 @@
             const scrollBottomBtn = document.getElementById('scroll-to-bottom');
 
             try {
-                // [수정됨] 이 부분은 배포 시 GitHub Actions에 의해 실제 firebaseConfig 객체로 자동 교체됩니다.
+                // 이 부분은 배포 시 GitHub Actions에 의해 실제 firebaseConfig 객체로 자동 교체됩니다.
                 const firebaseConfig = __firebase_config;
                 const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
 
-                // [수정됨] JSON.parse()를 제거하고 바로 객체를 사용합니다.
+                // JSON.parse()를 제거하고 바로 객체를 사용합니다.
                 const app = initializeApp(firebaseConfig);
                 db = getFirestore(app);
                 auth = getAuth(app);
                 
                 mediaCollectionRef = collection(db, `artifacts/${appId}/public/data/mediaPocData`);
 
+                // 익명 또는 커스텀 토큰으로 로그인
                 if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
                     await signInWithCustomToken(auth, __initial_auth_token);
                 } else {
@@ -474,10 +476,28 @@
                     });
 
                     initializeUIWithData(snapshotData);
+                    
+                    // [수정됨] 새로 추가된 항목이 있는지 확인하고 수정 모드로 전환
+                    if (newlyAddedItemId) {
+                        const newCardElement = document.getElementById(`card-${newlyAddedItemId}`);
+                        const newItemData = mediaData.find(item => item.id === newlyAddedItemId);
+                        
+                        if (newCardElement && newItemData) {
+                            // 새로 렌더링된 카드를 수정 모드로 즉시 전환
+                            newCardElement.innerHTML = generateCardEditView(newItemData);
+                            // 해당 카드로 스크롤하고 첫 번째 입력창에 포커스
+                            newCardElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            newCardElement.querySelector('input')?.focus();
+                        }
+                        // 플래그 초기화
+                        newlyAddedItemId = null;
+                    }
+
 
                     if (querySnapshot.metadata.hasPendingWrites) {
-                        // Local changes, no toast needed
-                    } else {
+                        // 로컬 변경사항으로 인한 업데이트일 경우, 중복 알림을 피합니다.
+                    } else if (auth.currentUser && !auth.currentUser.isAnonymous) {
+                         // 초기 로딩이 아닐 때만 업데이트 알림을 표시
                         showToast("데이터가 실시간으로 업데이트되었습니다.", "success");
                     }
                 }, (error) => {
@@ -490,11 +510,15 @@
                 showToast("Firebase 연결에 실패했습니다. 설정을 확인하세요.", "error");
                 document.getElementById('search-box').placeholder = 'Firebase 연결 실패!';
             }
-
+            
+            // [수정됨] 새 항목 추가 로직
             addNewCardButton.addEventListener('click', async () => {
                 const newItemData = { 매체명: '새 매체', 카테고리: [] };
                 try {
                     const docRef = await addDoc(mediaCollectionRef, newItemData);
+                    // 새로 생성된 문서의 ID를 전역 변수에 저장합니다.
+                    // onSnapshot 리스너가 이 ID를 보고 후속 처리를 합니다.
+                    newlyAddedItemId = docRef.id; 
                     showToast('새 항목이 추가되었습니다. 내용을 입력하세요.', 'success');
                 } catch (error) {
                     console.error("새 항목 추가 오류: ", error);
