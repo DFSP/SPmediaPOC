@@ -255,7 +255,6 @@
             });
         }
         
-        // [수정됨] renderMedia 함수 로직 개선
         function renderMedia(data) {
             const mediaList = document.getElementById('media-list');
             const noResults = document.getElementById('no-results');
@@ -276,12 +275,11 @@
                 mediaList.appendChild(card);
             });
 
-            // 화면에 실제 표시된 자식 노드의 유무로 "결과 없음" 메시지를 결정합니다.
             const hasContentToShow = mediaList.hasChildNodes();
             noResults.classList.toggle('hidden', hasContentToShow);
             copyAllContainer.classList.toggle('hidden', !hasContentToShow || !!newCard);
         }
-
+        
         function generateCardView(item) {
             const categoryTagsHtml = (item.카테고리 || []).map(cat => `<span class="text-xs font-semibold text-blue-800 bg-blue-100 dark:text-gray-200 dark:bg-gray-600 px-2 py-1 rounded-full">${cat}</span>`).join('');
             let infoHtml = '';
@@ -321,45 +319,41 @@
             const scrollTopBtn = document.getElementById('scroll-to-top');
             const scrollBottomBtn = document.getElementById('scroll-to-bottom');
 
-            try {
-                const firebaseConfig = __firebase_config;
-                const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-                const app = initializeApp(firebaseConfig);
-                db = getFirestore(app);
-                auth = getAuth(app);
-                mediaCollectionRef = collection(db, `artifacts/${appId}/public/data/mediaPocData`);
+            // [수정됨] Firebase 초기화와 인증 로직을 통합
+            async function main() {
+                try {
+                    const firebaseConfig = __firebase_config;
+                    const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+                    const app = initializeApp(firebaseConfig);
+                    db = getFirestore(app);
+                    auth = getAuth(app);
+                    mediaCollectionRef = collection(db, `artifacts/${appId}/public/data/mediaPocData`);
 
-                onAuthStateChanged(auth, (user) => {
-                    function isUserAuthorized(userObject) {
-                        if (!userObject || !userObject.email) {
-                            return false;
+                    onAuthStateChanged(auth, (user) => {
+                        const isAuthorized = user && (user.email.endsWith(`@${ALLOWED_DOMAIN}`) || user.email === ADMIN_EMAIL);
+                        
+                        if (isAuthorized) {
+                            loginScreen.style.display = 'none';
+                            mainContent.style.display = 'block';
+                            setupUserInfo(user);
+                            initializeFirestoreListener();
+                        } else {
+                            if (user) { 
+                                showToast("허용되지 않은 계정입니다.", "error");
+                                signOut(auth); 
+                            }
+                            loginScreen.style.display = 'flex';
+                            mainContent.style.display = 'none';
+                            userInfoContainer.innerHTML = '';
                         }
-                        const isCompanyUser = userObject.email.endsWith(`@${ALLOWED_DOMAIN}`);
-                        const isAdmin = userObject.email === ADMIN_EMAIL;
-                        return isCompanyUser || isAdmin;
-                    }
+                    });
 
-                    if (isUserAuthorized(user)) {
-                        loginScreen.style.display = 'none';
-                        mainContent.style.display = 'block';
-                        setupUserInfo(user);
-                        initializeFirestoreListener();
-                    } else {
-                        if (user) { 
-                            showToast("허용되지 않은 계정입니다.", "error");
-                            signOut(auth); 
-                        }
-                        loginScreen.style.display = 'flex';
-                        mainContent.style.display = 'none';
-                        userInfoContainer.innerHTML = '';
-                    }
-                });
-
-            } catch (e) {
-                console.error("Firebase 초기화 오류:", e);
-                showToast("Firebase 연결에 실패했습니다. 설정을 확인하세요.", "error");
-                loginScreen.innerHTML = `<div class="text-center text-red-500">Firebase 연결 실패! 관리자에게 문의하세요.</div>`;
-                loginScreen.style.display = 'flex';
+                } catch (e) {
+                    console.error("Firebase 초기화 오류:", e);
+                    showToast("Firebase 연결에 실패했습니다. 설정을 확인하세요.", "error");
+                    loginScreen.innerHTML = `<div class="text-center text-red-500">Firebase 연결 실패! 관리자에게 문의하세요.</div>`;
+                    loginScreen.style.display = 'flex';
+                }
             }
 
             let firestoreUnsubscribe = null;
@@ -528,6 +522,9 @@
                 console.error('Unhandled Promise Rejection:', event.reason);
                 showToast('예상치 못한 오류가 발생했습니다.', 'error');
             });
+
+            // 최종적으로 main 함수를 호출하여 앱을 시작합니다.
+            main();
         });
     </script>
 </body>
