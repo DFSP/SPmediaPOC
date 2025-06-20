@@ -34,11 +34,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # 2. 안정적인 awk 명령어로 Firebase Config를 교체합니다.
+      # 2. [수정됨] awk 명령어가 백틱 없는 placeholder를 찾도록 수정
       - name: Replace Firebase Config
         run: |
           CONFIG_JSON='${{ secrets.FIREBASE_CONFIG }}'
-          awk -v config="$CONFIG_JSON" '{gsub(/`__firebase_config`/, config)}1' index.html > index.html.tmp && mv index.html.tmp index.html
+          awk -v config="$CONFIG_JSON" '{gsub(/__firebase_config/, config)}1' index.html > index.html.tmp && mv index.html.tmp index.html
         
       # 3. GitHub Pages를 설정합니다.
       - name: Setup Pages
