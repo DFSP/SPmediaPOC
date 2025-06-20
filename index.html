@@ -207,7 +207,8 @@
         let currentFilteredData = [];
         let db, auth;
         let mediaCollectionRef;
-        const ALLOWED_DOMAIN = "dfirst-inc.com"; // [수정됨] 실제 회사 도메인으로 변경
+        const ALLOWED_DOMAIN = "dfirst-inc.com";
+        const ADMIN_EMAIL = "digitalfirst.sp@gmail.com"; // [수정됨] 관리자 이메일 상수 추가
 
         // --- 데이터 처리 및 UI 렌더링 함수 (변경 없음) ---
         function processExcelData(rawData) {
@@ -296,22 +297,7 @@
             const createInput = (name, label, value) => `<div class="mb-2"><label class="block text-xs font-medium text-gray-500 dark:text-gray-400">${label}</label><input type="text" name="${name}" value="${value || ''}" class="edit-input"></div>`;
             return `<form data-id="${item.id || ''}">${createInput('매체명', '매체명', item.매체명)}${createInput('카테고리', '카테고리 (쉼표로 구분)', (item.카테고리 || []).join(', '))}${createInput('담당자', '담당자', item.담당자)}${createInput('직책', '직책', item.직책)}${createInput('이메일', '이메일', item.이메일)}${createInput('팀메일', '팀메일', item.팀메일)}${createInput('연락처', '연락처', item.연락처)}${createInput('판매 대행사', '판매 대행사', item['판매 대행사'])}${createInput('소개서URL', '소개서URL', item['소개서URL'])}<div class="flex justify-end gap-2 mt-4"><button type="button" data-action="cancel" data-id="${item.id || ''}" class="px-3 py-1 text-sm rounded-md bg-gray-200 hover:bg-gray-300 dark:bg-gray-600 dark:hover:bg-gray-500 dark:text-gray-200">취소</button><button type="button" data-action="save" data-id="${item.id || ''}" class="px-3 py-1 text-sm rounded-md bg-blue-600 text-white hover:bg-blue-700">저장</button></div></form>`;
         }
-        function filterAndRender() {
-            const searchBox = document.getElementById('search-box');
-            const categoryTagsContainer = document.getElementById('category-tags-container');
-            const searchTerm = searchBox.value.toLowerCase().trim();
-            const selectedCategoryNodes = categoryTagsContainer.querySelectorAll('.bg-blue-600, .dark\\:bg-blue-500');
-            const selectedCategories = Array.from(selectedCategoryNodes).map(node => node.dataset.category);
-            const filteredData = mediaData.filter(item => {
-                const matchesSearch = (item.매체명 || '').toLowerCase().includes(searchTerm) || (item.담당자 || '').toLowerCase().includes(searchTerm);
-                if (selectedCategories.length === 0) { return matchesSearch; }
-                const matchesCategory = selectedCategories.some(cat => (item.카테고리 || []).includes(cat));
-                return matchesSearch && matchesCategory;
-            });
-            currentFilteredData = filteredData;
-            renderMedia(filteredData);
-        }
-
+        
         // --- 이벤트 리스너 및 나머지 함수 (변경 없음) ---
         document.addEventListener('DOMContentLoaded', async () => {
             const loginScreen = document.getElementById('login-screen');
@@ -337,14 +323,23 @@
                 auth = getAuth(app);
                 mediaCollectionRef = collection(db, `artifacts/${appId}/public/data/mediaPocData`);
 
+                // [수정됨] 인증 상태 확인 로직 변경
                 onAuthStateChanged(auth, (user) => {
-                    if (user && user.email.endsWith(`@${ALLOWED_DOMAIN}`)) {
+                    const isCompanyUser = user && user.email.endsWith(`@${ALLOWED_DOMAIN}`);
+                    const isAdmin = user && user.email === ADMIN_EMAIL;
+
+                    if (user && (isCompanyUser || isAdmin)) {
+                        // 로그인 성공 및 허용된 사용자
                         loginScreen.style.display = 'none';
                         mainContent.style.display = 'block';
                         setupUserInfo(user);
                         initializeFirestoreListener();
                     } else {
-                        if (user) signOut(auth);
+                        // 로그아웃 상태 또는 허용되지 않은 사용자
+                        if (user) { // 허용되지 않은 계정으로 로그인 시도 시
+                            showToast("허용되지 않은 계정입니다.", "error");
+                            signOut(auth); 
+                        }
                         loginScreen.style.display = 'flex';
                         mainContent.style.display = 'none';
                         userInfoContainer.innerHTML = '';
@@ -385,13 +380,7 @@
             loginButton.addEventListener('click', () => {
                 const provider = new GoogleAuthProvider();
                 signInWithPopup(auth, provider)
-                    .then((result) => {
-                        const user = result.user;
-                        if (!user.email.endsWith(`@${ALLOWED_DOMAIN}`)) {
-                            showToast("회사 계정으로만 로그인할 수 있습니다.", "error");
-                            signOut(auth);
-                        }
-                    }).catch((error) => {
+                    .catch((error) => {
                         console.error("Google 로그인 오류:", error);
                         showToast("Google 로그인에 실패했습니다.", "error");
                     });
