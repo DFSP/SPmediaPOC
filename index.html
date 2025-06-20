@@ -103,10 +103,9 @@
 
         <div id="toast-container" class="fixed top-5 right-5 z-50"></div>
         
-        <!-- [수정됨] container에 relative 클래스 추가 -->
         <div class="container relative mx-auto p-4 md:p-8 max-w-5xl">
-            <!-- [수정됨] 사용자 정보 컨테이너를 container 안으로 이동 및 클래스 변경 -->
-            <div id="user-info-container" class="absolute right-4 top-4 z-50 flex items-center gap-3">
+            <!-- [수정됨] 사용자 정보 컨테이너 위치 조정 -->
+            <div id="user-info-container" class="fixed right-8 top-12 z-50 flex items-center gap-3 rounded-full bg-white/70 p-2 shadow-md backdrop-blur-sm dark:bg-gray-800/70">
                 <!-- 사용자 정보가 여기에 동적으로 추가됩니다. -->
             </div>
 
@@ -205,6 +204,7 @@
         import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, doc, addDoc, getDocs, deleteDoc, updateDoc, onSnapshot, writeBatch } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
+        // 모든 로직을 DOMContentLoaded 이벤트 리스너 안으로 이동
         document.addEventListener('DOMContentLoaded', () => {
 
             // --- 전역 변수 ---
@@ -231,7 +231,7 @@
             const scrollBottomBtn = document.getElementById('scroll-to-bottom');
             const noResults = document.getElementById('no-results');
             
-            // --- 함수 선언부 ---
+            // --- [수정됨] 함수 선언 순서 재정비 ---
             
             function showToast(message, type = 'success') {
                 const toastContainer = document.getElementById('toast-container');
