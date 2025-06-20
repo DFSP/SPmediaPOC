@@ -34,7 +34,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # 2. [수정됨] 더 안정적인 awk 명령어로 Firebase Config를 교체합니다.
+      # 2. 안정적인 awk 명령어로 Firebase Config를 교체합니다.
       - name: Replace Firebase Config
         run: |
           CONFIG_JSON='${{ secrets.FIREBASE_CONFIG }}'
