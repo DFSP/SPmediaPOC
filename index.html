@@ -255,7 +255,6 @@
             });
         }
         
-        // [수정됨] renderMedia 함수 로직 개선
         function renderMedia(data) {
             const mediaList = document.getElementById('media-list');
             const noResults = document.getElementById('no-results');
@@ -276,12 +275,11 @@
                 mediaList.appendChild(card);
             });
 
-            // 화면에 실제 표시된 자식 노드의 유무로 "결과 없음" 메시지를 결정합니다.
             const hasContentToShow = mediaList.hasChildNodes();
             noResults.classList.toggle('hidden', hasContentToShow);
             copyAllContainer.classList.toggle('hidden', !hasContentToShow || !!newCard);
         }
-
+        
         function generateCardView(item) {
             const categoryTagsHtml = (item.카테고리 || []).map(cat => `<span class="text-xs font-semibold text-blue-800 bg-blue-100 dark:text-gray-200 dark:bg-gray-600 px-2 py-1 rounded-full">${cat}</span>`).join('');
             let infoHtml = '';
@@ -330,22 +328,30 @@
                     auth = getAuth(app);
                     mediaCollectionRef = collection(db, `artifacts/${appId}/public/data/mediaPocData`);
 
+                    // [최종 수정] onAuthStateChanged 로직 수정
                     onAuthStateChanged(auth, (user) => {
-                        const isAuthorized = user && (user.email.endsWith(`@${ALLOWED_DOMAIN}`) || user.email === ADMIN_EMAIL);
+                        // user가 null일 경우(로그아웃 상태)를 먼저 처리하여 오류 방지
+                        if (!user) {
+                            loginScreen.style.display = 'flex';
+                            mainContent.style.display = 'none';
+                            userInfoContainer.innerHTML = '';
+                            return; // 여기서 함수 실행을 종료
+                        }
+
+                        // user가 존재하는 경우에만 이메일 검사를 진행
+                        const isCompanyUser = user.email.endsWith(`@${ALLOWED_DOMAIN}`);
+                        const isAdmin = user.email === ADMIN_EMAIL;
                         
-                        if (isAuthorized) {
+                        if (isCompanyUser || isAdmin) {
+                            // 로그인 성공 및 허용된 사용자
                             loginScreen.style.display = 'none';
                             mainContent.style.display = 'block';
                             setupUserInfo(user);
                             initializeFirestoreListener();
                         } else {
-                            if (user) { 
-                                showToast("허용되지 않은 계정입니다.", "error");
-                                signOut(auth); 
-                            }
-                            loginScreen.style.display = 'flex';
-                            mainContent.style.display = 'none';
-                            userInfoContainer.innerHTML = '';
+                            // 허용되지 않은 계정으로 로그인 시도 시
+                            showToast("허용되지 않은 계정입니다.", "error");
+                            signOut(auth); 
                         }
                     });
 
