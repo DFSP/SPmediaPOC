@@ -202,113 +202,22 @@
         import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, doc, addDoc, getDocs, deleteDoc, updateDoc, onSnapshot, writeBatch } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // --- 전역 변수 ---
-        let mediaData = [];
-        let currentFilteredData = [];
-        let db, auth;
-        let mediaCollectionRef;
-        const ALLOWED_DOMAIN = "dfirst-inc.com";
-        const ADMIN_EMAIL = "digitalfirst.sp@gmail.com"; 
+        // [수정됨] 모든 로직을 DOMContentLoaded 이벤트 리스너 안으로 이동
+        document.addEventListener('DOMContentLoaded', () => {
 
-        // --- 데이터 처리 및 UI 렌더링 함수 (변경 없음) ---
-        function processExcelData(rawData) {
-            return rawData.map(row => {
-                const safeRow = (typeof row === 'object' && row !== null) ? row : {};
-                return { ...safeRow, 카테고리: (safeRow.카테고리 && typeof safeRow.카테고리 === 'string') ? safeRow.카테고리.split(',').map(cat => cat.trim()).filter(Boolean) : (Array.isArray(safeRow.카테고리) ? safeRow.카테고리 : []) };
-            });
-        }
-        function initializeUIWithData(data) {
-            mediaData = data;
-            populateCategories();
-            updateSearchPlaceholder();
-            filterAndRender();
-        }
-        function updateSearchPlaceholder() {
-            const searchBox = document.getElementById('search-box');
-            if (mediaData.length > 0) {
-                const exampleMedia = mediaData[0]?.매체명 || '';
-                const examplePoc = mediaData[0]?.담당자 || '';
-                let placeholderText = '예: ';
-                if (exampleMedia) placeholderText += `${exampleMedia}`;
-                if (examplePoc) placeholderText += `${exampleMedia ? ', ' : ''}${examplePoc}`;
-                searchBox.placeholder = placeholderText === '예: ' ? '매체명 또는 담당자 검색...' : placeholderText + '...';
-            } else {
-                searchBox.placeholder = '데이터가 없습니다. 엑셀 파일을 업로드해주세요.';
-            }
-        }
-        function populateCategories() {
-            const categoryTagsContainer = document.getElementById('category-tags-container');
-            const activeCategories = new Set(Array.from(categoryTagsContainer.querySelectorAll('.bg-blue-600, .dark\\:bg-blue-500')).map(tag => tag.dataset.category));
-            categoryTagsContainer.innerHTML = '';
-            const allCategories = new Set(mediaData.flatMap(item => item.카테고리).filter(Boolean));
-            const sortedCategories = [...allCategories].sort((a,b) => a.localeCompare(b, 'ko'));
-            sortedCategories.forEach(category => {
-                const button = document.createElement('button');
-                if (activeCategories.has(category)) {
-                    button.className = 'category-tag px-3 py-1.5 rounded-full text-sm font-semibold bg-blue-600 dark:bg-blue-500 text-white dark:text-white';
-                } else {
-                    button.className = 'category-tag px-3 py-1.5 rounded-full text-sm font-semibold bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600';
-                }
-                button.textContent = category;
-                button.dataset.category = category;
-                categoryTagsContainer.appendChild(button);
-            });
-        }
-        
-        function renderMedia(data) {
-            const mediaList = document.getElementById('media-list');
-            const noResults = document.getElementById('no-results');
-            const copyAllContainer = document.getElementById('copy-all-container');
-            
-            const newCard = document.querySelector('[data-is-new="true"]');
-            
-            mediaList.innerHTML = '';
-            if (newCard) {
-                mediaList.appendChild(newCard);
-            }
+            // --- 전역 변수 ---
+            let mediaData = [];
+            let currentFilteredData = [];
+            let db, auth;
+            let mediaCollectionRef;
+            const ALLOWED_DOMAIN = "dfirst-inc.com";
+            const ADMIN_EMAIL = "digitalfirst.sp@gmail.com"; 
 
-            data.forEach(item => {
-                const card = document.createElement('div');
-                card.id = `card-${item.id}`;
-                card.className = 'bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 flex flex-col transition-transform transform hover:-translate-y-1 transition-colors duration-300';
-                card.innerHTML = generateCardView(item);
-                mediaList.appendChild(card);
-            });
-
-            const hasContentToShow = mediaList.hasChildNodes();
-            noResults.classList.toggle('hidden', hasContentToShow);
-            copyAllContainer.classList.toggle('hidden', !hasContentToShow || !!newCard);
-        }
-        
-        function generateCardView(item) {
-            const categoryTagsHtml = (item.카테고리 || []).map(cat => `<span class="text-xs font-semibold text-blue-800 bg-blue-100 dark:text-gray-200 dark:bg-gray-600 px-2 py-1 rounded-full">${cat}</span>`).join('');
-            let infoHtml = '';
-            const createRow = (label, value, clipValue) => {
-                if (!value) return '';
-                const copyButton = clipValue ? `<button class="copy-button ml-auto shrink-0" data-clipboard="${clipValue}" aria-label="${label} 복사"><svg class="w-5 h-5 text-gray-400 hover:text-blue-600 dark:text-gray-500 dark:hover:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg></button>` : '';
-                return `<div class="flex items-center gap-2"><span class="font-semibold text-gray-500 dark:text-gray-400 w-20 shrink-0">${label}</span><div class="hover-scroll-container flex-grow min-w-0"><span class="truncate block">${value}</span></div>${copyButton}</div>`;
-            };
-            const contactPerson = item.담당자 ? `${item.담당자}${item.직책 ? ` / ${item.직책}` : ''}` : '';
-            infoHtml += createRow('담당자', contactPerson);
-            infoHtml += createRow('이메일', item.이메일, item.이메일);
-            infoHtml += createRow('팀메일', item.팀메일, item.팀메일);
-            infoHtml += createRow('연락처', item.연락처, item.연락처);
-            infoHtml += createRow('판매 대행사', item['판매 대행사'], item['판매 대행사']);
-            const introButtonHtml = item['소개서URL'] ? `<a href="${item['소개서URL']}" target="_blank" rel="noopener noreferrer" class="w-full text-center block bg-blue-600 text-white font-semibold text-sm py-2 px-4 rounded-lg hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 transition-colors">소개서 다운로드</a>` : `<button class="w-full text-center block bg-gray-300 dark:bg-gray-700 text-gray-500 dark:text-gray-400 font-semibold text-sm py-2 px-4 rounded-lg cursor-not-allowed" disabled>소개서 없음</button>`;
-            return `<div class="flex justify-between items-start gap-2 mb-4"><h2 class="text-xl font-bold text-gray-800 dark:text-gray-100 break-words" title="${item.매체명 || ''}">${item.매체명 || ''}</h2><div class="flex flex-col items-end space-y-1 flex-shrink-0"><button data-action="edit" data-id="${item.id}" class="text-xs text-gray-400 hover:text-blue-600 dark:text-gray-500 dark:hover:text-blue-400">수정</button><button data-action="delete" data-id="${item.id}" class="text-xs text-red-500 hover:text-red-700 dark:hover:text-red-400">삭제</button></div></div><div class="flex-grow"><div class="flex flex-wrap gap-2 mb-4">${categoryTagsHtml}</div><div class="space-y-3 text-sm text-gray-700 dark:text-gray-300">${infoHtml}</div></div><div class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">${introButtonHtml}</div>`;
-        }
-        function generateCardEditView(item) {
-            const createInput = (name, label, value) => `<div class="mb-2"><label class="block text-xs font-medium text-gray-500 dark:text-gray-400">${label}</label><input type="text" name="${name}" value="${value || ''}" class="edit-input"></div>`;
-            return `<form data-id="${item.id || ''}">${createInput('매체명', '매체명', item.매체명)}${createInput('카테고리', '카테고리 (쉼표로 구분)', (item.카테고리 || []).join(', '))}${createInput('담당자', '담당자', item.담당자)}${createInput('직책', '직책', item.직책)}${createInput('이메일', '이메일', item.이메일)}${createInput('팀메일', '팀메일', item.팀메일)}${createInput('연락처', '연락처', item.연락처)}${createInput('판매 대행사', '판매 대행사', item['판매 대행사'])}${createInput('소개서URL', '소개서URL', item['소개서URL'])}<div class="flex justify-end gap-2 mt-4"><button type="button" data-action="cancel" data-id="${item.id || ''}" class="px-3 py-1 text-sm rounded-md bg-gray-200 hover:bg-gray-300 dark:bg-gray-600 dark:hover:bg-gray-500 dark:text-gray-200">취소</button><button type="button" data-action="save" data-id="${item.id || ''}" class="px-3 py-1 text-sm rounded-md bg-blue-600 text-white hover:bg-blue-700">저장</button></div></form>`;
-        }
-        
-        // --- 이벤트 리스너 및 나머지 함수 (변경 없음) ---
-        document.addEventListener('DOMContentLoaded', async () => {
+            // --- DOM Element 참조 ---
             const loginScreen = document.getElementById('login-screen');
             const mainContent = document.getElementById('main-content');
             const loginButton = document.getElementById('login-button');
             const userInfoContainer = document.getElementById('user-info-container');
-            
             const excelUpload = document.getElementById('excel-upload');
             const fileNameSpan = document.getElementById('file-name');
             const searchBox = document.getElementById('search-box');
@@ -318,7 +227,156 @@
             const addNewCardButton = document.getElementById('add-new-card-button');
             const scrollTopBtn = document.getElementById('scroll-to-top');
             const scrollBottomBtn = document.getElementById('scroll-to-bottom');
+            const noResults = document.getElementById('no-results');
+            
+            // --- UI 렌더링 및 데이터 처리 함수 ---
+            
+            function showToast(message, type = 'success') {
+                const toastContainer = document.getElementById('toast-container');
+                const toast = document.createElement('div');
+                const bgColor = type === 'success' ? 'bg-green-500' : 'bg-red-500';
+                toast.className = `${bgColor} text-white text-sm font-semibold py-2 px-4 rounded-lg shadow-lg toast-notification opacity-0 transform translate-y-2`;
+                toast.textContent = message;
+                toastContainer.appendChild(toast);
+                setTimeout(() => { toast.classList.remove('opacity-0', 'translate-y-2'); toast.classList.add('opacity-100', 'transform-none'); }, 10);
+                setTimeout(() => { toast.classList.add('opacity-0'); setTimeout(() => { toast.remove(); }, 500); }, 2000);
+            }
 
+            function generateCardView(item) {
+                const categoryTagsHtml = (item.카테고리 || []).map(cat => `<span class="text-xs font-semibold text-blue-800 bg-blue-100 dark:text-gray-200 dark:bg-gray-600 px-2 py-1 rounded-full">${cat}</span>`).join('');
+                let infoHtml = '';
+                const createRow = (label, value, clipValue) => {
+                    if (!value) return '';
+                    const copyButton = clipValue ? `<button class="copy-button ml-auto shrink-0" data-clipboard="${clipValue}" aria-label="${label} 복사"><svg class="w-5 h-5 text-gray-400 hover:text-blue-600 dark:text-gray-500 dark:hover:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg></button>` : '';
+                    return `<div class="flex items-center gap-2"><span class="font-semibold text-gray-500 dark:text-gray-400 w-20 shrink-0">${label}</span><div class="hover-scroll-container flex-grow min-w-0"><span class="truncate block">${value}</span></div>${copyButton}</div>`;
+                };
+                const contactPerson = item.담당자 ? `${item.담당자}${item.직책 ? ` / ${item.직책}` : ''}` : '';
+                infoHtml += createRow('담당자', contactPerson);
+                infoHtml += createRow('이메일', item.이메일, item.이메일);
+                infoHtml += createRow('팀메일', item.팀메일, item.팀메일);
+                infoHtml += createRow('연락처', item.연락처, item.연락처);
+                infoHtml += createRow('판매 대행사', item['판매 대행사'], item['판매 대행사']);
+                const introButtonHtml = item['소개서URL'] ? `<a href="${item['소개서URL']}" target="_blank" rel="noopener noreferrer" class="w-full text-center block bg-blue-600 text-white font-semibold text-sm py-2 px-4 rounded-lg hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 transition-colors">소개서 다운로드</a>` : `<button class="w-full text-center block bg-gray-300 dark:bg-gray-700 text-gray-500 dark:text-gray-400 font-semibold text-sm py-2 px-4 rounded-lg cursor-not-allowed" disabled>소개서 없음</button>`;
+                return `<div class="flex justify-between items-start gap-2 mb-4"><h2 class="text-xl font-bold text-gray-800 dark:text-gray-100 break-words" title="${item.매체명 || ''}">${item.매체명 || ''}</h2><div class="flex flex-col items-end space-y-1 flex-shrink-0"><button data-action="edit" data-id="${item.id}" class="text-xs text-gray-400 hover:text-blue-600 dark:text-gray-500 dark:hover:text-blue-400">수정</button><button data-action="delete" data-id="${item.id}" class="text-xs text-red-500 hover:text-red-700 dark:hover:text-red-400">삭제</button></div></div><div class="flex-grow"><div class="flex flex-wrap gap-2 mb-4">${categoryTagsHtml}</div><div class="space-y-3 text-sm text-gray-700 dark:text-gray-300">${infoHtml}</div></div><div class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">${introButtonHtml}</div>`;
+            }
+
+            function renderMedia(data) {
+                const newCard = document.querySelector('[data-is-new="true"]');
+                mediaList.innerHTML = '';
+                if (newCard) {
+                    mediaList.appendChild(newCard);
+                }
+                data.forEach(item => {
+                    const card = document.createElement('div');
+                    card.id = `card-${item.id}`;
+                    card.className = 'bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 flex flex-col transition-transform transform hover:-translate-y-1 transition-colors duration-300';
+                    card.innerHTML = generateCardView(item);
+                    mediaList.appendChild(card);
+                });
+                const hasContentToShow = mediaList.hasChildNodes();
+                noResults.classList.toggle('hidden', hasContentToShow);
+                copyAllButton.classList.toggle('hidden', !hasContentToShow || !!newCard);
+            }
+
+            function filterAndRender() {
+                const searchTerm = searchBox.value.toLowerCase().trim();
+                const selectedCategoryNodes = categoryTagsContainer.querySelectorAll('.bg-blue-600, .dark\\:bg-blue-500');
+                const selectedCategories = Array.from(selectedCategoryNodes).map(node => node.dataset.category);
+                
+                const filteredData = mediaData.filter(item => {
+                    const matchesSearch = (item.매체명 || '').toLowerCase().includes(searchTerm) || (item.담당자 || '').toLowerCase().includes(searchTerm);
+                    if (selectedCategories.length === 0) { return matchesSearch; }
+                    const matchesCategory = selectedCategories.some(cat => (item.카테고리 || []).includes(cat));
+                    return matchesSearch && matchesCategory;
+                });
+                
+                currentFilteredData = filteredData;
+                renderMedia(filteredData);
+            }
+            
+            function initializeUIWithData(data) {
+                mediaData = data;
+                populateCategories();
+                updateSearchPlaceholder();
+                filterAndRender();
+            }
+
+            // ... 나머지 함수들 ...
+            function processExcelData(rawData) {
+                return rawData.map(row => {
+                    const safeRow = (typeof row === 'object' && row !== null) ? row : {};
+                    return { ...safeRow, 카테고리: (safeRow.카테고리 && typeof safeRow.카테고리 === 'string') ? safeRow.카테고리.split(',').map(cat => cat.trim()).filter(Boolean) : (Array.isArray(safeRow.카테고리) ? safeRow.카테고리 : []) };
+                });
+            }
+            function updateSearchPlaceholder() {
+                if (mediaData.length > 0) {
+                    const exampleMedia = mediaData[0]?.매체명 || '';
+                    const examplePoc = mediaData[0]?.담당자 || '';
+                    let placeholderText = '예: ';
+                    if (exampleMedia) placeholderText += `${exampleMedia}`;
+                    if (examplePoc) placeholderText += `${exampleMedia ? ', ' : ''}${examplePoc}`;
+                    searchBox.placeholder = placeholderText === '예: ' ? '매체명 또는 담당자 검색...' : placeholderText + '...';
+                } else {
+                    searchBox.placeholder = '데이터가 없습니다. 엑셀 파일을 업로드해주세요.';
+                }
+            }
+            function populateCategories() {
+                const activeCategories = new Set(Array.from(categoryTagsContainer.querySelectorAll('.bg-blue-600, .dark\\:bg-blue-500')).map(tag => tag.dataset.category));
+                categoryTagsContainer.innerHTML = '';
+                const allCategories = new Set(mediaData.flatMap(item => item.카테고리).filter(Boolean));
+                const sortedCategories = [...allCategories].sort((a,b) => a.localeCompare(b, 'ko'));
+                sortedCategories.forEach(category => {
+                    const button = document.createElement('button');
+                    if (activeCategories.has(category)) {
+                        button.className = 'category-tag px-3 py-1.5 rounded-full text-sm font-semibold bg-blue-600 dark:bg-blue-500 text-white dark:text-white';
+                    } else {
+                        button.className = 'category-tag px-3 py-1.5 rounded-full text-sm font-semibold bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600';
+                    }
+                    button.textContent = category;
+                    button.dataset.category = category;
+                    categoryTagsContainer.appendChild(button);
+                });
+            }
+            function generateCardEditView(item) {
+                const createInput = (name, label, value) => `<div class="mb-2"><label class="block text-xs font-medium text-gray-500 dark:text-gray-400">${label}</label><input type="text" name="${name}" value="${value || ''}" class="edit-input"></div>`;
+                return `<form data-id="${item.id || ''}">${createInput('매체명', '매체명', item.매체명)}${createInput('카테고리', '카테고리 (쉼표로 구분)', (item.카테고리 || []).join(', '))}${createInput('담당자', '담당자', item.담당자)}${createInput('직책', '직책', item.직책)}${createInput('이메일', '이메일', item.이메일)}${createInput('팀메일', '팀메일', item.팀메일)}${createInput('연락처', '연락처', item.연락처)}${createInput('판매 대행사', '판매 대행사', item['판매 대행사'])}${createInput('소개서URL', '소개서URL', item['소개서URL'])}<div class="flex justify-end gap-2 mt-4"><button type="button" data-action="cancel" data-id="${item.id || ''}" class="px-3 py-1 text-sm rounded-md bg-gray-200 hover:bg-gray-300 dark:bg-gray-600 dark:hover:bg-gray-500 dark:text-gray-200">취소</button><button type="button" data-action="save" data-id="${item.id || ''}" class="px-3 py-1 text-sm rounded-md bg-blue-600 text-white hover:bg-blue-700">저장</button></div></form>`;
+            }
+            function copyTextToClipboard(textToCopy) {
+                const textArea = document.createElement("textarea");
+                textArea.value = textToCopy;
+                textArea.style.position = 'fixed';
+                textArea.style.top = '-9999px';
+                textArea.style.left = '-9999px';
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+                let success = false;
+                try { success = document.execCommand('copy'); } catch (err) { success = false; }
+                document.body.removeChild(textArea);
+                return success;
+            }
+            async function uploadDataToFirebase(dataToUpload) {
+                showToast('데이터를 Firebase에 업로드 중입니다...', 'success');
+                try {
+                    const existingDocs = await getDocs(mediaCollectionRef);
+                    const deleteBatch = writeBatch(db);
+                    existingDocs.forEach(doc => { deleteBatch.delete(doc.ref); });
+                    await deleteBatch.commit();
+                    const addBatch = writeBatch(db);
+                    dataToUpload.forEach(item => {
+                        const docRef = doc(mediaCollectionRef);
+                        addBatch.set(docRef, item);
+                    });
+                    await addBatch.commit();
+                    showToast(`${dataToUpload.length}개의 데이터를 성공적으로 업로드했습니다.`, 'success');
+                } catch (error) {
+                    console.error("Firebase 업로드 오류:", error);
+                    showToast("Firebase에 데이터를 업로드하는 중 오류가 발생했습니다.", "error");
+                }
+            }
+
+
+            // --- 메인 실행 로직 ---
             async function main() {
                 try {
                     const firebaseConfig = __firebase_config;
@@ -328,28 +386,22 @@
                     auth = getAuth(app);
                     mediaCollectionRef = collection(db, `artifacts/${appId}/public/data/mediaPocData`);
 
-                    // [최종 수정] onAuthStateChanged 로직 수정
                     onAuthStateChanged(auth, (user) => {
-                        // user가 null일 경우(로그아웃 상태)를 먼저 처리하여 오류 방지
                         if (!user) {
                             loginScreen.style.display = 'flex';
                             mainContent.style.display = 'none';
                             userInfoContainer.innerHTML = '';
-                            return; // 여기서 함수 실행을 종료
+                            return;
                         }
-
-                        // user가 존재하는 경우에만 이메일 검사를 진행
-                        const isCompanyUser = user.email.endsWith(`@${ALLOWED_DOMAIN}`);
-                        const isAdmin = user.email === ADMIN_EMAIL;
                         
-                        if (isCompanyUser || isAdmin) {
-                            // 로그인 성공 및 허용된 사용자
+                        const isAuthorized = user.email.endsWith(`@${ALLOWED_DOMAIN}`) || user.email === ADMIN_EMAIL;
+                        
+                        if (isAuthorized) {
                             loginScreen.style.display = 'none';
                             mainContent.style.display = 'block';
                             setupUserInfo(user);
                             initializeFirestoreListener();
                         } else {
-                            // 허용되지 않은 계정으로 로그인 시도 시
                             showToast("허용되지 않은 계정입니다.", "error");
                             signOut(auth); 
                         }
