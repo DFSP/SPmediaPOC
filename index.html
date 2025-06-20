@@ -73,6 +73,19 @@
 </head>
 <body class="bg-gray-100 dark:bg-gray-900 transition-colors duration-300">
 
+    <!-- [수정됨] 최초 접속 동의 모달 -->
+    <div id="agreement-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black bg-opacity-75">
+        <div class="w-full max-w-md rounded-lg bg-white p-8 text-center shadow-xl dark:bg-gray-800">
+            <h2 class="mb-4 text-2xl font-bold text-gray-900 dark:text-white">디지털퍼스트 미디어 POC</h2>
+            <p class="mb-6 text-gray-600 dark:text-gray-300">디지털퍼스트 내부 배포 자료입니다.<br>URL 외부 공유는 삼가해주시길 바랍니다.</p>
+            <div class="flex items-center justify-center">
+                <input id="agreement-checkbox" type="checkbox" class="h-4 w-4 rounded border-gray-300 bg-gray-100 text-blue-600 focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800">
+                <label for="agreement-checkbox" class="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300">동의합니다.</label>
+            </div>
+            <button id="agreement-button" class="mt-8 w-full rounded-lg bg-blue-600 px-5 py-2.5 text-center text-sm font-medium text-white opacity-50 transition hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-300 dark:hover:bg-blue-700 dark:focus:ring-blue-800" disabled>확인</button>
+        </div>
+    </div>
+
     <!-- 롤링 배너 (상단) -->
     <div class="scrolling-banner-container bg-red-100 text-red-600 dark:bg-red-900/50 dark:text-red-300">
         <div class="scrolling-banner-content py-1 text-xs font-semibold">
@@ -436,6 +449,11 @@
 
         // --- 이벤트 리스너 설정 ---
         document.addEventListener('DOMContentLoaded', async () => {
+            const agreementModal = document.getElementById('agreement-modal');
+            const agreementCheckbox = document.getElementById('agreement-checkbox');
+            const agreementButton = document.getElementById('agreement-button');
+            const mainContent = document.querySelector('.container');
+
             const excelUpload = document.getElementById('excel-upload');
             const fileNameSpan = document.getElementById('file-name');
             const searchBox = document.getElementById('search-box');
@@ -446,19 +464,47 @@
             const scrollTopBtn = document.getElementById('scroll-to-top');
             const scrollBottomBtn = document.getElementById('scroll-to-bottom');
 
+            function getCurrentSeoulDate() {
+                return new Date().toLocaleString('sv', { timeZone: 'Asia/Seoul' }).slice(0, 10);
+            }
+
+            const today = getCurrentSeoulDate();
+            const lastAgreedDate = localStorage.getItem('mediaPocAgreementDate');
+
+            if (lastAgreedDate !== today) {
+                agreementModal.classList.remove('hidden');
+                agreementModal.classList.add('flex');
+                
+                agreementCheckbox.addEventListener('change', () => {
+                    if (agreementCheckbox.checked) {
+                        agreementButton.disabled = false;
+                        agreementButton.classList.remove('opacity-50');
+                    } else {
+                        agreementButton.disabled = true;
+                        agreementButton.classList.add('opacity-50');
+                    }
+                });
+
+                agreementButton.addEventListener('click', () => {
+                    if (agreementCheckbox.checked) {
+                        localStorage.setItem('mediaPocAgreementDate', today);
+                        agreementModal.classList.add('hidden');
+                        agreementModal.classList.remove('flex');
+                    }
+                });
+            }
+
+
             try {
-                // 이 부분은 배포 시 GitHub Actions에 의해 실제 firebaseConfig 객체로 자동 교체됩니다.
                 const firebaseConfig = __firebase_config;
                 const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
 
-                // JSON.parse()를 제거하고 바로 객체를 사용합니다.
                 const app = initializeApp(firebaseConfig);
                 db = getFirestore(app);
                 auth = getAuth(app);
                 
                 mediaCollectionRef = collection(db, `artifacts/${appId}/public/data/mediaPocData`);
 
-                // 익명 또는 커스텀 토큰으로 로그인
                 if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
                     await signInWithCustomToken(auth, __initial_auth_token);
                 } else {
@@ -482,9 +528,7 @@
                     initializeUIWithData(snapshotData);
 
                     if (querySnapshot.metadata.hasPendingWrites) {
-                        // 로컬 변경사항으로 인한 업데이트일 경우, 중복 알림을 피합니다.
                     } else if (auth.currentUser && !auth.currentUser.isAnonymous) {
-                         // 초기 로딩이 아닐 때만 업데이트 알림을 표시
                         showToast("데이터가 실시간으로 업데이트되었습니다.", "success");
                     }
                 }, (error) => {
