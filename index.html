@@ -442,17 +442,17 @@
             const scrollBottomBtn = document.getElementById('scroll-to-bottom');
 
             try {
-                // 이 환경에서는 __firebase_config 변수가 자동으로 제공됩니다.
-                const firebaseConfig = `__firebase_config`;
+                // [수정됨] 이 부분은 배포 시 GitHub Actions에 의해 실제 firebaseConfig 객체로 자동 교체됩니다.
+                const firebaseConfig = __firebase_config;
                 const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
 
-                const app = initializeApp(JSON.parse(firebaseConfig));
+                // [수정됨] JSON.parse()를 제거하고 바로 객체를 사용합니다.
+                const app = initializeApp(firebaseConfig);
                 db = getFirestore(app);
                 auth = getAuth(app);
                 
                 mediaCollectionRef = collection(db, `artifacts/${appId}/public/data/mediaPocData`);
 
-                // 이 환경에서는 __initial_auth_token 변수가 자동으로 제공됩니다.
                 if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
                     await signInWithCustomToken(auth, __initial_auth_token);
                 } else {
