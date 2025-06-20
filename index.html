@@ -14,7 +14,7 @@
             font-family: 'Inter', 'Noto Sans KR', sans-serif;
             padding-bottom: 2.5rem; /* 하단 배너 공간 확보 */
         }
-        /* [수정됨] 로그인 화면과 메인 콘텐츠의 기본 상태 설정 */
+        /* 로그인 화면과 메인 콘텐츠의 기본 상태 설정 */
         #login-screen, #main-content {
             display: none; /* 기본적으로 모두 숨김 */
         }
@@ -77,7 +77,7 @@
 </head>
 <body class="bg-gray-100 dark:bg-gray-900 transition-colors duration-300">
     
-    <!-- [수정됨] 로그인 화면 -->
+    <!-- 로그인 화면 -->
     <div id="login-screen" class="flex min-h-screen items-center justify-center">
         <div class="w-full max-w-sm rounded-lg bg-white p-8 text-center shadow-xl dark:bg-gray-800">
             <h1 class="mb-4 text-2xl font-bold text-gray-800 dark:text-white">[SP]미디어 POC 리스트</h1>
@@ -89,7 +89,7 @@
         </div>
     </div>
     
-    <!-- [수정됨] 메인 콘텐츠 영역 -->
+    <!-- 메인 콘텐츠 영역 -->
     <div id="main-content">
         <!-- 롤링 배너 (상단) -->
         <div class="scrolling-banner-container bg-red-100 text-red-600 dark:bg-red-900/50 dark:text-red-300">
@@ -104,7 +104,7 @@
         <div id="toast-container" class="fixed top-5 right-5 z-50"></div>
 
         <div class="container mx-auto p-4 md:p-8 max-w-5xl">
-            <!-- [수정됨] 헤더에 사용자 정보 및 로그아웃 버튼 추가 -->
+            <!-- 헤더에 사용자 정보 및 로그아웃 버튼 추가 -->
             <header class="mb-8 rounded-t-lg border-b-4 border-blue-600 bg-white py-8 text-center shadow-sm transition-colors duration-300 dark:bg-gray-800">
                 <div class="absolute right-4 top-4 flex items-center gap-3" id="user-info-container">
                     <!-- 사용자 정보가 여기에 동적으로 추가됩니다. -->
@@ -197,7 +197,7 @@
 
     <!-- Firebase SDK 추가 -->
     <script type="module">
-        // [수정됨] Firebase Auth 관련 기능 추가
+        // Firebase Auth 관련 기능 추가
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, doc, addDoc, getDocs, deleteDoc, updateDoc, onSnapshot, writeBatch } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
@@ -207,7 +207,7 @@
         let currentFilteredData = [];
         let db, auth;
         let mediaCollectionRef;
-        const ALLOWED_DOMAIN = "your-company.com"; // [중요] 여기에 허용할 회사 도메인을 입력하세요. 예: "digitalfirst.co.kr"
+        const ALLOWED_DOMAIN = "dfirst-inc.com"; // [수정됨] 실제 회사 도메인으로 변경
 
         // --- 데이터 처리 및 UI 렌더링 함수 (변경 없음) ---
         function processExcelData(rawData) {
@@ -296,51 +296,23 @@
             const createInput = (name, label, value) => `<div class="mb-2"><label class="block text-xs font-medium text-gray-500 dark:text-gray-400">${label}</label><input type="text" name="${name}" value="${value || ''}" class="edit-input"></div>`;
             return `<form data-id="${item.id || ''}">${createInput('매체명', '매체명', item.매체명)}${createInput('카테고리', '카테고리 (쉼표로 구분)', (item.카테고리 || []).join(', '))}${createInput('담당자', '담당자', item.담당자)}${createInput('직책', '직책', item.직책)}${createInput('이메일', '이메일', item.이메일)}${createInput('팀메일', '팀메일', item.팀메일)}${createInput('연락처', '연락처', item.연락처)}${createInput('판매 대행사', '판매 대행사', item['판매 대행사'])}${createInput('소개서URL', '소개서URL', item['소개서URL'])}<div class="flex justify-end gap-2 mt-4"><button type="button" data-action="cancel" data-id="${item.id || ''}" class="px-3 py-1 text-sm rounded-md bg-gray-200 hover:bg-gray-300 dark:bg-gray-600 dark:hover:bg-gray-500 dark:text-gray-200">취소</button><button type="button" data-action="save" data-id="${item.id || ''}" class="px-3 py-1 text-sm rounded-md bg-blue-600 text-white hover:bg-blue-700">저장</button></div></form>`;
         }
-        function copyTextToClipboard(textToCopy) {
-            const textArea = document.createElement("textarea");
-            textArea.value = textToCopy;
-            textArea.style.position = 'fixed';
-            textArea.style.top = '-9999px';
-            textArea.style.left = '-9999px';
-            document.body.appendChild(textArea);
-            textArea.focus();
-            textArea.select();
-            let success = false;
-            try { success = document.execCommand('copy'); } catch (err) { success = false; }
-            document.body.removeChild(textArea);
-            return success;
-        }
-        function showToast(message, type = 'success') {
-            const toastContainer = document.getElementById('toast-container');
-            const toast = document.createElement('div');
-            const bgColor = type === 'success' ? 'bg-green-500' : 'bg-red-500';
-            toast.className = `${bgColor} text-white text-sm font-semibold py-2 px-4 rounded-lg shadow-lg toast-notification opacity-0 transform translate-y-2`;
-            toast.textContent = message;
-            toastContainer.appendChild(toast);
-            setTimeout(() => { toast.classList.remove('opacity-0', 'translate-y-2'); toast.classList.add('opacity-100', 'transform-none'); }, 10);
-            setTimeout(() => { toast.classList.add('opacity-0'); setTimeout(() => { toast.remove(); }, 500); }, 2000);
-        }
-        async function uploadDataToFirebase(dataToUpload) {
-            showToast('데이터를 Firebase에 업로드 중입니다...', 'success');
-            try {
-                const existingDocs = await getDocs(mediaCollectionRef);
-                const deleteBatch = writeBatch(db);
-                existingDocs.forEach(doc => { deleteBatch.delete(doc.ref); });
-                await deleteBatch.commit();
-                const addBatch = writeBatch(db);
-                dataToUpload.forEach(item => {
-                    const docRef = doc(mediaCollectionRef);
-                    addBatch.set(docRef, item);
-                });
-                await addBatch.commit();
-                showToast(`${dataToUpload.length}개의 데이터를 성공적으로 업로드했습니다.`, 'success');
-            } catch (error) {
-                console.error("Firebase 업로드 오류:", error);
-                showToast("Firebase에 데이터를 업로드하는 중 오류가 발생했습니다.", "error");
-            }
+        function filterAndRender() {
+            const searchBox = document.getElementById('search-box');
+            const categoryTagsContainer = document.getElementById('category-tags-container');
+            const searchTerm = searchBox.value.toLowerCase().trim();
+            const selectedCategoryNodes = categoryTagsContainer.querySelectorAll('.bg-blue-600, .dark\\:bg-blue-500');
+            const selectedCategories = Array.from(selectedCategoryNodes).map(node => node.dataset.category);
+            const filteredData = mediaData.filter(item => {
+                const matchesSearch = (item.매체명 || '').toLowerCase().includes(searchTerm) || (item.담당자 || '').toLowerCase().includes(searchTerm);
+                if (selectedCategories.length === 0) { return matchesSearch; }
+                const matchesCategory = selectedCategories.some(cat => (item.카테고리 || []).includes(cat));
+                return matchesSearch && matchesCategory;
+            });
+            currentFilteredData = filteredData;
+            renderMedia(filteredData);
         }
 
-        // --- 이벤트 리스너 설정 ---
+        // --- 이벤트 리스너 및 나머지 함수 (변경 없음) ---
         document.addEventListener('DOMContentLoaded', async () => {
             const loginScreen = document.getElementById('login-screen');
             const mainContent = document.getElementById('main-content');
@@ -365,17 +337,14 @@
                 auth = getAuth(app);
                 mediaCollectionRef = collection(db, `artifacts/${appId}/public/data/mediaPocData`);
 
-                // [수정됨] 인증 상태 변경 감지
                 onAuthStateChanged(auth, (user) => {
                     if (user && user.email.endsWith(`@${ALLOWED_DOMAIN}`)) {
-                        // 로그인 성공 및 허용된 도메인 사용자
                         loginScreen.style.display = 'none';
                         mainContent.style.display = 'block';
                         setupUserInfo(user);
                         initializeFirestoreListener();
                     } else {
-                        // 로그아웃 상태 또는 허용되지 않은 사용자
-                        if (user) signOut(auth); // 허용되지 않은 도메인이면 즉시 로그아웃
+                        if (user) signOut(auth);
                         loginScreen.style.display = 'flex';
                         mainContent.style.display = 'none';
                         userInfoContainer.innerHTML = '';
@@ -389,11 +358,9 @@
                 loginScreen.style.display = 'flex';
             }
 
-            // [수정됨] Firestore 리스너 설정 함수
             let firestoreUnsubscribe = null;
             function initializeFirestoreListener() {
-                if (firestoreUnsubscribe) firestoreUnsubscribe(); // 기존 리스너가 있다면 중복 방지를 위해 해제
-
+                if (firestoreUnsubscribe) firestoreUnsubscribe(); 
                 firestoreUnsubscribe = onSnapshot(mediaCollectionRef, (querySnapshot) => {
                     let snapshotData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                     snapshotData.sort((a, b) => (a.매체명 || '').localeCompare(b.매체명 || '', 'ko'));
@@ -404,7 +371,6 @@
                 });
             }
             
-            // [수정됨] 사용자 정보 표시 및 로그아웃 버튼 설정 함수
             function setupUserInfo(user) {
                 userInfoContainer.innerHTML = `
                     <img src="${user.photoURL || 'https://placehold.co/32x32/e2e8f0/64748b?text=P'}" alt="프로필 사진" class="h-8 w-8 rounded-full">
@@ -416,7 +382,6 @@
                 });
             }
 
-            // [수정됨] Google 로그인 버튼 클릭 이벤트
             loginButton.addEventListener('click', () => {
                 const provider = new GoogleAuthProvider();
                 signInWithPopup(auth, provider)
