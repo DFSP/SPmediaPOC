@@ -22,7 +22,7 @@ concurrency:
 jobs:
   # 배포 작업
   deploy:
-    # [수정됨] 배포 환경을 'github-pages'로 명시적으로 지정합니다.
+    # 배포 환경을 'github-pages'로 명시적으로 지정합니다.
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -34,12 +34,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # 2. [가장 중요] index.html 파일의 placeholder를 Secret 값으로 교체합니다.
+      # 2. [수정됨] 더 안정적인 awk 명령어로 Firebase Config를 교체합니다.
       - name: Replace Firebase Config
         run: |
-          sed -i 's|`__firebase_config`|${{ secrets.FIREBASE_CONFIG }}|g' index.html
+          CONFIG_JSON='${{ secrets.FIREBASE_CONFIG }}'
+          awk -v config="$CONFIG_JSON" '{gsub(/`__firebase_config`/, config)}1' index.html > index.html.tmp && mv index.html.tmp index.html
         
-      # 3. [수정됨] GitHub Pages를 설정합니다. (setup-pages -> configure-pages)
+      # 3. GitHub Pages를 설정합니다.
       - name: Setup Pages
         uses: actions/configure-pages@v5
         
