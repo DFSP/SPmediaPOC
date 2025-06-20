@@ -184,7 +184,7 @@
         let currentFilteredData = []; // 현재 필터링된 데이터
         let db, auth; // Firebase 인스턴스
         let mediaCollectionRef; // Firebase 컬렉션 참조
-        let newlyAddedItemId = null; // [수정됨] 새로 추가된 항목의 ID를 임시 저장하는 변수
+        let newlyAddedItemId = null; // 새로 추가된 항목의 ID를 임시 저장하는 변수
 
         // --- 데이터 처리 및 UI 렌더링 함수 ---
 
@@ -469,15 +469,30 @@
                         ...doc.data()
                     }));
 
-                    snapshotData.sort((a, b) => {
-                        const nameA = a.매체명 || '';
-                        const nameB = b.매체명 || '';
-                        return nameA.localeCompare(nameB, 'ko');
-                    });
-
+                    // [수정됨] 새로 추가된 항목을 맨 위로 올리고 나머지를 정렬합니다.
+                    if (newlyAddedItemId) {
+                        const newIndex = snapshotData.findIndex(item => item.id === newlyAddedItemId);
+                        if (newIndex > -1) {
+                            const [newItem] = snapshotData.splice(newIndex, 1); // 배열에서 새 항목을 꺼냄
+                            snapshotData.sort((a, b) => { // 나머지 항목 정렬
+                                const nameA = a.매체명 || '';
+                                const nameB = b.매체명 || '';
+                                return nameA.localeCompare(nameB, 'ko');
+                            });
+                            snapshotData.unshift(newItem); // 새 항목을 맨 앞에 삽입
+                        }
+                    } else {
+                        // 일반적인 경우: 전체를 정렬
+                        snapshotData.sort((a, b) => {
+                            const nameA = a.매체명 || '';
+                            const nameB = b.매체명 || '';
+                            return nameA.localeCompare(nameB, 'ko');
+                        });
+                    }
+                    
                     initializeUIWithData(snapshotData);
                     
-                    // [수정됨] 새로 추가된 항목이 있는지 확인하고 수정 모드로 전환
+                    // 새로 추가된 항목이 있는지 확인하고 수정 모드로 전환
                     if (newlyAddedItemId) {
                         const newCardElement = document.getElementById(`card-${newlyAddedItemId}`);
                         const newItemData = mediaData.find(item => item.id === newlyAddedItemId);
@@ -487,7 +502,7 @@
                             newCardElement.innerHTML = generateCardEditView(newItemData);
                             // 해당 카드로 스크롤하고 첫 번째 입력창에 포커스
                             newCardElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                            newCardElement.querySelector('input')?.focus();
+                            newCardElement.querySelector('input[name="매체명"]')?.focus();
                         }
                         // 플래그 초기화
                         newlyAddedItemId = null;
@@ -511,7 +526,6 @@
                 document.getElementById('search-box').placeholder = 'Firebase 연결 실패!';
             }
             
-            // [수정됨] 새 항목 추가 로직
             addNewCardButton.addEventListener('click', async () => {
                 const newItemData = { 매체명: '새 매체', 카테고리: [] };
                 try {
