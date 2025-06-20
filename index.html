@@ -14,6 +14,10 @@
             font-family: 'Inter', 'Noto Sans KR', sans-serif;
             padding-bottom: 2.5rem; /* 하단 배너 공간 확보 */
         }
+        /* [수정됨] 로그인 화면과 메인 콘텐츠의 기본 상태 설정 */
+        #login-screen, #main-content {
+            display: none; /* 기본적으로 모두 숨김 */
+        }
         /* 알림 메시지 애니메이션 */
         .toast-notification {
             transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out;
@@ -72,155 +76,152 @@
     </script>
 </head>
 <body class="bg-gray-100 dark:bg-gray-900 transition-colors duration-300">
-
-    <!-- [수정됨] 최초 접속 동의 모달 -->
-    <div id="agreement-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black bg-opacity-75">
-        <div class="w-full max-w-md rounded-lg bg-white p-8 text-center shadow-xl dark:bg-gray-800">
-            <h2 class="mb-4 text-2xl font-bold text-gray-900 dark:text-white">디지털퍼스트 미디어 POC</h2>
-            <p class="mb-6 text-gray-600 dark:text-gray-300">디지털퍼스트 내부 배포 자료입니다.<br>URL 외부 공유는 삼가해주시길 바랍니다.</p>
-            <div class="flex items-center justify-center">
-                <input id="agreement-checkbox" type="checkbox" class="h-4 w-4 rounded border-gray-300 bg-gray-100 text-blue-600 focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800">
-                <label for="agreement-checkbox" class="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300">동의합니다.</label>
+    
+    <!-- [수정됨] 로그인 화면 -->
+    <div id="login-screen" class="flex min-h-screen items-center justify-center">
+        <div class="w-full max-w-sm rounded-lg bg-white p-8 text-center shadow-xl dark:bg-gray-800">
+            <h1 class="mb-4 text-2xl font-bold text-gray-800 dark:text-white">[SP]미디어 POC 리스트</h1>
+            <p class="mb-8 text-sm text-gray-500 dark:text-gray-400">회사 Google 계정으로 로그인하세요.</p>
+            <button id="login-button" class="inline-flex w-full items-center justify-center rounded-lg border border-gray-300 bg-white px-5 py-2.5 text-center text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-100 focus:outline-none focus:ring-4 focus:ring-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600 dark:focus:ring-gray-700">
+                <svg class="mr-2 h-4 w-4" aria-hidden="true" focusable="false" data-prefix="fab" data-icon="google" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 488 512"><path fill="currentColor" d="M488 261.8C488 403.3 391.1 504 248 504 110.8 504 0 393.2 0 256S110.8 8 248 8c66.8 0 126 21.2 177.2 56.5L357 137.9C332.3 115.8 293.8 98 248 98c-84.3 0-152.3 68.3-152.3 158s68 158 152.3 158c94.2 0 135.8-63.5 141.2-95.2H248v-65.7h239.2c.4 12.3.6 24.6.6 37.3z"></path></svg>
+                Google 계정으로 로그인
+            </button>
+        </div>
+    </div>
+    
+    <!-- [수정됨] 메인 콘텐츠 영역 -->
+    <div id="main-content">
+        <!-- 롤링 배너 (상단) -->
+        <div class="scrolling-banner-container bg-red-100 text-red-600 dark:bg-red-900/50 dark:text-red-300">
+            <div class="scrolling-banner-content py-1 text-xs font-semibold">
+                <span>디지털퍼스트 내부 배포 자료입니다. URL외부 공유 금지.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+                <span>디지털퍼스트 내부 배포 자료입니다. URL외부 공유 금지.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+                <span>디지털퍼스트 내부 배포 자료입니다. URL외부 공유 금지.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+                <span>디지털퍼스트 내부 배포 자료입니다. URL외부 공유 금지.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
             </div>
-            <button id="agreement-button" class="mt-8 w-full rounded-lg bg-blue-600 px-5 py-2.5 text-center text-sm font-medium text-white opacity-50 transition hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-300 dark:hover:bg-blue-700 dark:focus:ring-blue-800" disabled>확인</button>
         </div>
-    </div>
 
-    <!-- 롤링 배너 (상단) -->
-    <div class="scrolling-banner-container bg-red-100 text-red-600 dark:bg-red-900/50 dark:text-red-300">
-        <div class="scrolling-banner-content py-1 text-xs font-semibold">
-            <span>디지털퍼스트 내부 배포 자료입니다. URL외부 공유 금지.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
-            <span>디지털퍼스트 내부 배포 자료입니다. URL외부 공유 금지.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
-            <span>디지털퍼스트 내부 배포 자료입니다. URL외부 공유 금지.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
-            <span>디지털퍼스트 내부 배포 자료입니다. URL외부 공유 금지.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
-        </div>
-    </div>
+        <div id="toast-container" class="fixed top-5 right-5 z-50"></div>
 
-    <div id="toast-container" class="fixed top-5 right-5 z-50"></div>
-
-    <div class="container mx-auto p-4 md:p-8 max-w-5xl">
-        <!-- 헤더 -->
-        <header class="text-center mb-8 py-8 bg-white dark:bg-gray-800 border-b-4 border-blue-600 shadow-sm rounded-t-lg transition-colors duration-300">
-            <h1 class="text-3xl md:text-4xl font-bold text-gray-800 dark:text-gray-100">[SP]미디어 POC 리스트</h1>
-            <p class="text-gray-500 dark:text-gray-400 mt-2">매체명을 검색하거나 카테고리를 선택하여 담당자 정보를 확인하세요.</p>
-        </header>
-        
-        <main>
-            <!-- 컨트롤 패널 -->
-            <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md mb-6 transition-colors duration-300">
-                <div class="mb-4">
-                    <label for="search-box" class="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-2">매체명/담당자 검색</label>
-                    <input type="text" id="search-box" class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition" placeholder="데이터베이스 연결 중...">
+        <div class="container mx-auto p-4 md:p-8 max-w-5xl">
+            <!-- [수정됨] 헤더에 사용자 정보 및 로그아웃 버튼 추가 -->
+            <header class="mb-8 rounded-t-lg border-b-4 border-blue-600 bg-white py-8 text-center shadow-sm transition-colors duration-300 dark:bg-gray-800">
+                <div class="absolute right-4 top-4 flex items-center gap-3" id="user-info-container">
+                    <!-- 사용자 정보가 여기에 동적으로 추가됩니다. -->
                 </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-2">카테고리 선택 (중복 가능)</label>
-                    <div id="category-tags-container" class="flex flex-wrap gap-2">
-                        <!-- 카테고리 태그가 동적으로 여기에 추가됩니다. -->
+                <h1 class="text-3xl font-bold text-gray-800 dark:text-gray-100 md:text-4xl">[SP]미디어 POC 리스트</h1>
+                <p class="mt-2 text-gray-500 dark:text-gray-400">매체명을 검색하거나 카테고리를 선택하여 담당자 정보를 확인하세요.</p>
+            </header>
+            
+            <main>
+                <!-- 컨트롤 패널 -->
+                <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md mb-6 transition-colors duration-300">
+                    <div class="mb-4">
+                        <label for="search-box" class="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-2">매체명/담당자 검색</label>
+                        <input type="text" id="search-box" class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition" placeholder="데이터베이스 연결 중...">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-2">카테고리 선택 (중복 가능)</label>
+                        <div id="category-tags-container" class="flex flex-wrap gap-2">
+                            <!-- 카테고리 태그가 동적으로 여기에 추가됩니다. -->
+                        </div>
                     </div>
                 </div>
+
+                <!-- 신규 추가 버튼 -->
+                <div class="mb-6 text-right">
+                    <button id="add-new-card-button" class="bg-blue-600 text-white font-bold text-sm py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors shadow-md inline-flex items-center">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+                        신규 추가
+                    </button>
+                </div>
+
+                <!-- 결과 영역 -->
+                <div id="media-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- 매체 정보 카드가 여기에 동적으로 추가됩니다. -->
+                </div>
+                
+                <!-- 결과 없음 메시지 -->
+                <div id="no-results" class="text-center py-16 px-6 bg-white dark:bg-gray-800 rounded-xl shadow-md hidden transition-colors duration-300">
+                    <svg class="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                         <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+                    </svg>
+                    <h3 class="mt-2 text-lg font-medium text-gray-800 dark:text-gray-200">데이터를 찾을 수 없습니다.</h3>
+                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Firebase에 데이터가 없거나 연결에 실패했습니다. 관리자에게 문의하세요.</p>
+                </div>
+
+                <!-- 전체 복사 버튼 컨테이너 -->
+                <div id="copy-all-container" class="mt-8 text-center hidden">
+                    <button id="copy-all-button" class="bg-green-600 text-white font-bold text-sm py-2.5 px-5 rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors shadow-lg">
+                        <svg class="inline-block w-5 h-5 mr-2 -mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
+                        검색 결과 복사(paste to Excel)
+                    </button>
+                </div>
+            </main>
+
+            <footer class="text-center mt-12 py-4 border-t border-gray-200 dark:border-gray-700 transition-colors duration-300">
+                 <div class="mb-2">
+                     <label for="excel-upload" class="text-xs text-gray-500 dark:text-gray-400 underline cursor-pointer hover:text-gray-700 dark:hover:text-gray-300 transition-colors">
+                         데이터파일 관리(SP팀)
+                     </label>
+                     <input type="file" id="excel-upload" accept=".xlsx, .xls, .csv">
+                     <span id="file-name" class="ml-2 text-xs text-gray-500"></span>
+                 </div>
+                 <div>
+                     <p class="text-xs text-gray-400 dark:text-gray-500">copyright © digitalFirst All Right Reserved.</p>
+                 </div>
+            </footer>
+        </div>
+
+        <!-- 페이지 이동 버튼 -->
+        <div class="fixed bottom-12 right-6 flex flex-col gap-2 z-40">
+            <button id="scroll-to-top" title="맨 위로" class="w-10 h-10 bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-full shadow-lg flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-600 transition-opacity opacity-0">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg>
+            </button>
+            <button id="scroll-to-bottom" title="맨 아래로" class="w-10 h-10 bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-full shadow-lg flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-600 transition-opacity">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+            </button>
+        </div>
+
+        <!-- 롤링 배너 (하단) -->
+        <div class="scrolling-banner-container bg-red-100 text-red-600 dark:bg-red-900/50 dark:text-red-300 fixed bottom-0 left-0 z-30">
+            <div class="scrolling-banner-content py-1 text-xs font-semibold">
+                <span>디지털퍼스트 내부 배포 자료입니다. URL외부 공유 금지.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+                <span>디지털퍼스트 내부 배포 자료입니다. URL외부 공유 금지.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+                <span>디지털퍼스트 내부 배포 자료입니다. URL외부 공유 금지.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+                <span>디지털퍼스트 내부 배포 자료입니다. URL외부 공유 금지.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
             </div>
-
-            <!-- 신규 추가 버튼 -->
-            <div class="mb-6 text-right">
-                <button id="add-new-card-button" class="bg-blue-600 text-white font-bold text-sm py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors shadow-md inline-flex items-center">
-                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
-                    신규 추가
-                </button>
-            </div>
-
-            <!-- 결과 영역 -->
-            <div id="media-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <!-- 매체 정보 카드가 여기에 동적으로 추가됩니다. -->
-            </div>
-            
-            <!-- 결과 없음 메시지 -->
-            <div id="no-results" class="text-center py-16 px-6 bg-white dark:bg-gray-800 rounded-xl shadow-md hidden transition-colors duration-300">
-                <svg class="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-                     <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
-                </svg>
-                <h3 class="mt-2 text-lg font-medium text-gray-800 dark:text-gray-200">데이터를 찾을 수 없습니다.</h3>
-                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Firebase에 데이터가 없거나 연결에 실패했습니다. 관리자에게 문의하세요.</p>
-            </div>
-
-            <!-- 전체 복사 버튼 컨테이너 -->
-            <div id="copy-all-container" class="mt-8 text-center hidden">
-                <button id="copy-all-button" class="bg-green-600 text-white font-bold text-sm py-2.5 px-5 rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors shadow-lg">
-                    <svg class="inline-block w-5 h-5 mr-2 -mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
-                    검색 결과 복사(paste to Excel)
-                </button>
-            </div>
-        </main>
-
-        <footer class="text-center mt-12 py-4 border-t border-gray-200 dark:border-gray-700 transition-colors duration-300">
-             <div class="mb-2">
-                 <label for="excel-upload" class="text-xs text-gray-500 dark:text-gray-400 underline cursor-pointer hover:text-gray-700 dark:hover:text-gray-300 transition-colors">
-                     데이터파일 관리(SP팀)
-                 </label>
-                 <input type="file" id="excel-upload" accept=".xlsx, .xls, .csv">
-                 <span id="file-name" class="ml-2 text-xs text-gray-500"></span>
-             </div>
-             <div>
-                 <p class="text-xs text-gray-400 dark:text-gray-500">copyright © digitalFirst All Right Reserved.</p>
-             </div>
-        </footer>
-    </div>
-
-    <!-- 페이지 이동 버튼 -->
-    <div class="fixed bottom-12 right-6 flex flex-col gap-2 z-40">
-        <button id="scroll-to-top" title="맨 위로" class="w-10 h-10 bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-full shadow-lg flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-600 transition-opacity opacity-0">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg>
-        </button>
-        <button id="scroll-to-bottom" title="맨 아래로" class="w-10 h-10 bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-full shadow-lg flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-600 transition-opacity">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-        </button>
-    </div>
-
-    <!-- 롤링 배너 (하단) -->
-    <div class="scrolling-banner-container bg-red-100 text-red-600 dark:bg-red-900/50 dark:text-red-300 fixed bottom-0 left-0 z-30">
-        <div class="scrolling-banner-content py-1 text-xs font-semibold">
-            <span>디지털퍼스트 내부 배포 자료입니다. URL외부 공유 금지.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
-            <span>디지털퍼스트 내부 배포 자료입니다. URL외부 공유 금지.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
-            <span>디지털퍼스트 내부 배포 자료입니다. URL외부 공유 금지.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
-            <span>디지털퍼스트 내부 배포 자료입니다. URL외부 공유 금지.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
         </div>
     </div>
+
 
     <!-- Firebase SDK 추가 -->
     <script type="module">
-        // Firebase 라이브러리 import
+        // [수정됨] Firebase Auth 관련 기능 추가
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, doc, addDoc, getDocs, deleteDoc, updateDoc, onSnapshot, writeBatch } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // --- 전역 변수 ---
-        let mediaData = []; // 로컬 데이터 캐시. Firebase에서 실시간으로 업데이트됩니다.
-        let currentFilteredData = []; // 현재 필터링된 데이터
-        let db, auth; // Firebase 인스턴스
-        let mediaCollectionRef; // Firebase 컬렉션 참조
-        
-        // --- 데이터 처리 및 UI 렌더링 함수 ---
+        let mediaData = [];
+        let currentFilteredData = [];
+        let db, auth;
+        let mediaCollectionRef;
+        const ALLOWED_DOMAIN = "your-company.com"; // [중요] 여기에 허용할 회사 도메인을 입력하세요. 예: "digitalfirst.co.kr"
 
-        // 엑셀 원본 데이터를 가공하는 함수
+        // --- 데이터 처리 및 UI 렌더링 함수 (변경 없음) ---
         function processExcelData(rawData) {
             return rawData.map(row => {
                 const safeRow = (typeof row === 'object' && row !== null) ? row : {};
-                return {
-                    ...safeRow,
-                    카테고리: (safeRow.카테고리 && typeof safeRow.카테고리 === 'string') 
-                            ? safeRow.카테고리.split(',').map(cat => cat.trim()).filter(Boolean) 
-                            : (Array.isArray(safeRow.카테고리) ? safeRow.카테고리 : [])
-                };
+                return { ...safeRow, 카테고리: (safeRow.카테고리 && typeof safeRow.카테고리 === 'string') ? safeRow.카테고리.split(',').map(cat => cat.trim()).filter(Boolean) : (Array.isArray(safeRow.카테고리) ? safeRow.카테고리 : []) };
             });
         }
-
-        // Firebase에서 데이터를 가져온 후 UI를 초기화하고 업데이트하는 함수
         function initializeUIWithData(data) {
             mediaData = data;
             populateCategories();
             updateSearchPlaceholder();
             filterAndRender();
         }
-        
         function updateSearchPlaceholder() {
             const searchBox = document.getElementById('search-box');
             if (mediaData.length > 0) {
@@ -234,18 +235,12 @@
                 searchBox.placeholder = '데이터가 없습니다. 엑셀 파일을 업로드해주세요.';
             }
         }
-
         function populateCategories() {
             const categoryTagsContainer = document.getElementById('category-tags-container');
-            const activeCategories = new Set(
-                Array.from(categoryTagsContainer.querySelectorAll('.bg-blue-600, .dark\\:bg-blue-500'))
-                    .map(tag => tag.dataset.category)
-            );
-
+            const activeCategories = new Set(Array.from(categoryTagsContainer.querySelectorAll('.bg-blue-600, .dark\\:bg-blue-500')).map(tag => tag.dataset.category));
             categoryTagsContainer.innerHTML = '';
             const allCategories = new Set(mediaData.flatMap(item => item.카테고리).filter(Boolean));
             const sortedCategories = [...allCategories].sort((a,b) => a.localeCompare(b, 'ko'));
-            
             sortedCategories.forEach(category => {
                 const button = document.createElement('button');
                 if (activeCategories.has(category)) {
@@ -258,27 +253,20 @@
                 categoryTagsContainer.appendChild(button);
             });
         }
-
         function renderMedia(data) {
             const mediaList = document.getElementById('media-list');
             const noResults = document.getElementById('no-results');
             const copyAllContainer = document.getElementById('copy-all-container');
-            
             const newCard = document.querySelector('[data-is-new="true"]');
-            
             mediaList.innerHTML = '';
             if (newCard) {
                 mediaList.appendChild(newCard);
             }
-
             noResults.classList.toggle('hidden', mediaData.length > 0 || !!newCard);
-
             if(data.length === 0 && !newCard) {
                  noResults.classList.remove('hidden');
             }
-
             copyAllContainer.classList.toggle('hidden', data.length === 0);
-
             data.forEach(item => {
                 const card = document.createElement('div');
                 card.id = `card-${item.id}`;
@@ -287,100 +275,27 @@
                 mediaList.appendChild(card);
             });
         }
-        
         function generateCardView(item) {
-            const categoryTagsHtml = (item.카테고리 || []).map(cat => 
-                `<span class="text-xs font-semibold text-blue-800 bg-blue-100 dark:text-gray-200 dark:bg-gray-600 px-2 py-1 rounded-full">${cat}</span>`
-            ).join('');
-
+            const categoryTagsHtml = (item.카테고리 || []).map(cat => `<span class="text-xs font-semibold text-blue-800 bg-blue-100 dark:text-gray-200 dark:bg-gray-600 px-2 py-1 rounded-full">${cat}</span>`).join('');
             let infoHtml = '';
             const createRow = (label, value, clipValue) => {
                 if (!value) return '';
                 const copyButton = clipValue ? `<button class="copy-button ml-auto shrink-0" data-clipboard="${clipValue}" aria-label="${label} 복사"><svg class="w-5 h-5 text-gray-400 hover:text-blue-600 dark:text-gray-500 dark:hover:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg></button>` : '';
                 return `<div class="flex items-center gap-2"><span class="font-semibold text-gray-500 dark:text-gray-400 w-20 shrink-0">${label}</span><div class="hover-scroll-container flex-grow min-w-0"><span class="truncate block">${value}</span></div>${copyButton}</div>`;
             };
-
             const contactPerson = item.담당자 ? `${item.담당자}${item.직책 ? ` / ${item.직책}` : ''}` : '';
             infoHtml += createRow('담당자', contactPerson);
             infoHtml += createRow('이메일', item.이메일, item.이메일);
             infoHtml += createRow('팀메일', item.팀메일, item.팀메일);
             infoHtml += createRow('연락처', item.연락처, item.연락처);
             infoHtml += createRow('판매 대행사', item['판매 대행사'], item['판매 대행사']);
-            
-            const introButtonHtml = item['소개서URL']
-                ? `<a href="${item['소개서URL']}" target="_blank" rel="noopener noreferrer" class="w-full text-center block bg-blue-600 text-white font-semibold text-sm py-2 px-4 rounded-lg hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 transition-colors">소개서 다운로드</a>`
-                : `<button class="w-full text-center block bg-gray-300 dark:bg-gray-700 text-gray-500 dark:text-gray-400 font-semibold text-sm py-2 px-4 rounded-lg cursor-not-allowed" disabled>소개서 없음</button>`;
-            
-            return `
-                <div class="flex justify-between items-start gap-2 mb-4">
-                    <h2 class="text-xl font-bold text-gray-800 dark:text-gray-100 break-words" title="${item.매체명 || ''}">${item.매체명 || ''}</h2>
-                    <div class="flex flex-col items-end space-y-1 flex-shrink-0">
-                        <button data-action="edit" data-id="${item.id}" class="text-xs text-gray-400 hover:text-blue-600 dark:text-gray-500 dark:hover:text-blue-400">수정</button>
-                        <button data-action="delete" data-id="${item.id}" class="text-xs text-red-500 hover:text-red-700 dark:hover:text-red-400">삭제</button>
-                    </div>
-                </div>
-                <div class="flex-grow">
-                    <div class="flex flex-wrap gap-2 mb-4">${categoryTagsHtml}</div>
-                    <div class="space-y-3 text-sm text-gray-700 dark:text-gray-300">${infoHtml}</div>
-                </div>
-                 <div class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-                     ${introButtonHtml}
-                 </div>
-            `;
+            const introButtonHtml = item['소개서URL'] ? `<a href="${item['소개서URL']}" target="_blank" rel="noopener noreferrer" class="w-full text-center block bg-blue-600 text-white font-semibold text-sm py-2 px-4 rounded-lg hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 transition-colors">소개서 다운로드</a>` : `<button class="w-full text-center block bg-gray-300 dark:bg-gray-700 text-gray-500 dark:text-gray-400 font-semibold text-sm py-2 px-4 rounded-lg cursor-not-allowed" disabled>소개서 없음</button>`;
+            return `<div class="flex justify-between items-start gap-2 mb-4"><h2 class="text-xl font-bold text-gray-800 dark:text-gray-100 break-words" title="${item.매체명 || ''}">${item.매체명 || ''}</h2><div class="flex flex-col items-end space-y-1 flex-shrink-0"><button data-action="edit" data-id="${item.id}" class="text-xs text-gray-400 hover:text-blue-600 dark:text-gray-500 dark:hover:text-blue-400">수정</button><button data-action="delete" data-id="${item.id}" class="text-xs text-red-500 hover:text-red-700 dark:hover:text-red-400">삭제</button></div></div><div class="flex-grow"><div class="flex flex-wrap gap-2 mb-4">${categoryTagsHtml}</div><div class="space-y-3 text-sm text-gray-700 dark:text-gray-300">${infoHtml}</div></div><div class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">${introButtonHtml}</div>`;
         }
-        
         function generateCardEditView(item) {
-            const createInput = (name, label, value) => `
-                <div class="mb-2">
-                    <label class="block text-xs font-medium text-gray-500 dark:text-gray-400">${label}</label>
-                    <input type="text" name="${name}" value="${value || ''}" class="edit-input">
-                </div>
-            `;
-            
-            return `
-                <form data-id="${item.id || ''}">
-                    ${createInput('매체명', '매체명', item.매체명)}
-                    ${createInput('카테고리', '카테고리 (쉼표로 구분)', (item.카테고리 || []).join(', '))}
-                    ${createInput('담당자', '담당자', item.담당자)}
-                    ${createInput('직책', '직책', item.직책)}
-                    ${createInput('이메일', '이메일', item.이메일)}
-                    ${createInput('팀메일', '팀메일', item.팀메일)}
-                    ${createInput('연락처', '연락처', item.연락처)}
-                    ${createInput('판매 대행사', '판매 대행사', item['판매 대행사'])}
-                    ${createInput('소개서URL', '소개서URL', item['소개서URL'])}
-                    <div class="flex justify-end gap-2 mt-4">
-                        <button type="button" data-action="cancel" data-id="${item.id || ''}" class="px-3 py-1 text-sm rounded-md bg-gray-200 hover:bg-gray-300 dark:bg-gray-600 dark:hover:bg-gray-500 dark:text-gray-200">취소</button>
-                        <button type="button" data-action="save" data-id="${item.id || ''}" class="px-3 py-1 text-sm rounded-md bg-blue-600 text-white hover:bg-blue-700">저장</button>
-                    </div>
-                </form>
-            `;
+            const createInput = (name, label, value) => `<div class="mb-2"><label class="block text-xs font-medium text-gray-500 dark:text-gray-400">${label}</label><input type="text" name="${name}" value="${value || ''}" class="edit-input"></div>`;
+            return `<form data-id="${item.id || ''}">${createInput('매체명', '매체명', item.매체명)}${createInput('카테고리', '카테고리 (쉼표로 구분)', (item.카테고리 || []).join(', '))}${createInput('담당자', '담당자', item.담당자)}${createInput('직책', '직책', item.직책)}${createInput('이메일', '이메일', item.이메일)}${createInput('팀메일', '팀메일', item.팀메일)}${createInput('연락처', '연락처', item.연락처)}${createInput('판매 대행사', '판매 대행사', item['판매 대행사'])}${createInput('소개서URL', '소개서URL', item['소개서URL'])}<div class="flex justify-end gap-2 mt-4"><button type="button" data-action="cancel" data-id="${item.id || ''}" class="px-3 py-1 text-sm rounded-md bg-gray-200 hover:bg-gray-300 dark:bg-gray-600 dark:hover:bg-gray-500 dark:text-gray-200">취소</button><button type="button" data-action="save" data-id="${item.id || ''}" class="px-3 py-1 text-sm rounded-md bg-blue-600 text-white hover:bg-blue-700">저장</button></div></form>`;
         }
-        
-        function filterAndRender() {
-            const searchBox = document.getElementById('search-box');
-            const categoryTagsContainer = document.getElementById('category-tags-container');
-            
-            const searchTerm = searchBox.value.toLowerCase().trim();
-            const selectedCategoryNodes = categoryTagsContainer.querySelectorAll('.bg-blue-600, .dark\\:bg-blue-500');
-            const selectedCategories = Array.from(selectedCategoryNodes).map(node => node.dataset.category);
-            
-            const filteredData = mediaData.filter(item => {
-                const matchesSearch = (item.매체명 || '').toLowerCase().includes(searchTerm) || 
-                                      (item.담당자 || '').toLowerCase().includes(searchTerm);
-
-                if (selectedCategories.length === 0) {
-                    return matchesSearch;
-                }
-
-                const matchesCategory = selectedCategories.some(cat => (item.카테고리 || []).includes(cat));
-
-                return matchesSearch && matchesCategory;
-            });
-            
-            currentFilteredData = filteredData;
-            renderMedia(filteredData);
-        }
-
         function copyTextToClipboard(textToCopy) {
             const textArea = document.createElement("textarea");
             textArea.value = textToCopy;
@@ -391,15 +306,10 @@
             textArea.focus();
             textArea.select();
             let success = false;
-            try {
-                success = document.execCommand('copy');
-            } catch (err) {
-                success = false;
-            }
+            try { success = document.execCommand('copy'); } catch (err) { success = false; }
             document.body.removeChild(textArea);
             return success;
         }
-        
         function showToast(message, type = 'success') {
             const toastContainer = document.getElementById('toast-container');
             const toast = document.createElement('div');
@@ -407,38 +317,22 @@
             toast.className = `${bgColor} text-white text-sm font-semibold py-2 px-4 rounded-lg shadow-lg toast-notification opacity-0 transform translate-y-2`;
             toast.textContent = message;
             toastContainer.appendChild(toast);
-            setTimeout(() => {
-                toast.classList.remove('opacity-0', 'translate-y-2');
-                toast.classList.add('opacity-100', 'transform-none');
-            }, 10);
-            
-            setTimeout(() => {
-                toast.classList.add('opacity-0');
-                setTimeout(() => {
-                    toast.remove();
-                }, 500);
-            }, 2000);
+            setTimeout(() => { toast.classList.remove('opacity-0', 'translate-y-2'); toast.classList.add('opacity-100', 'transform-none'); }, 10);
+            setTimeout(() => { toast.classList.add('opacity-0'); setTimeout(() => { toast.remove(); }, 500); }, 2000);
         }
-
-        // --- Firebase 관련 함수 ---
-
         async function uploadDataToFirebase(dataToUpload) {
             showToast('데이터를 Firebase에 업로드 중입니다...', 'success');
             try {
                 const existingDocs = await getDocs(mediaCollectionRef);
                 const deleteBatch = writeBatch(db);
-                existingDocs.forEach(doc => {
-                    deleteBatch.delete(doc.ref);
-                });
+                existingDocs.forEach(doc => { deleteBatch.delete(doc.ref); });
                 await deleteBatch.commit();
-
                 const addBatch = writeBatch(db);
                 dataToUpload.forEach(item => {
                     const docRef = doc(mediaCollectionRef);
                     addBatch.set(docRef, item);
                 });
                 await addBatch.commit();
-                
                 showToast(`${dataToUpload.length}개의 데이터를 성공적으로 업로드했습니다.`, 'success');
             } catch (error) {
                 console.error("Firebase 업로드 오류:", error);
@@ -446,14 +340,13 @@
             }
         }
 
-
         // --- 이벤트 리스너 설정 ---
         document.addEventListener('DOMContentLoaded', async () => {
-            const agreementModal = document.getElementById('agreement-modal');
-            const agreementCheckbox = document.getElementById('agreement-checkbox');
-            const agreementButton = document.getElementById('agreement-button');
-            const mainContent = document.querySelector('.container');
-
+            const loginScreen = document.getElementById('login-screen');
+            const mainContent = document.getElementById('main-content');
+            const loginButton = document.getElementById('login-button');
+            const userInfoContainer = document.getElementById('user-info-container');
+            
             const excelUpload = document.getElementById('excel-upload');
             const fileNameSpan = document.getElementById('file-name');
             const searchBox = document.getElementById('search-box');
@@ -464,112 +357,101 @@
             const scrollTopBtn = document.getElementById('scroll-to-top');
             const scrollBottomBtn = document.getElementById('scroll-to-bottom');
 
-            function getCurrentSeoulDate() {
-                return new Date().toLocaleString('sv', { timeZone: 'Asia/Seoul' }).slice(0, 10);
-            }
-
-            const today = getCurrentSeoulDate();
-            const lastAgreedDate = localStorage.getItem('mediaPocAgreementDate');
-
-            if (lastAgreedDate !== today) {
-                agreementModal.classList.remove('hidden');
-                agreementModal.classList.add('flex');
-                
-                agreementCheckbox.addEventListener('change', () => {
-                    if (agreementCheckbox.checked) {
-                        agreementButton.disabled = false;
-                        agreementButton.classList.remove('opacity-50');
-                    } else {
-                        agreementButton.disabled = true;
-                        agreementButton.classList.add('opacity-50');
-                    }
-                });
-
-                agreementButton.addEventListener('click', () => {
-                    if (agreementCheckbox.checked) {
-                        localStorage.setItem('mediaPocAgreementDate', today);
-                        agreementModal.classList.add('hidden');
-                        agreementModal.classList.remove('flex');
-                    }
-                });
-            }
-
-
             try {
                 const firebaseConfig = __firebase_config;
                 const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-
                 const app = initializeApp(firebaseConfig);
                 db = getFirestore(app);
                 auth = getAuth(app);
-                
                 mediaCollectionRef = collection(db, `artifacts/${appId}/public/data/mediaPocData`);
 
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    await signInWithCustomToken(auth, __initial_auth_token);
-                } else {
-                    await signInAnonymously(auth);
-                }
-                
-                showToast("Firebase에 성공적으로 연결되었습니다.", "success");
-
-                onSnapshot(mediaCollectionRef, (querySnapshot) => {
-                    let snapshotData = querySnapshot.docs.map(doc => ({
-                        id: doc.id,
-                        ...doc.data()
-                    }));
-                    
-                    snapshotData.sort((a, b) => {
-                        const nameA = a.매체명 || '';
-                        const nameB = b.매체명 || '';
-                        return nameA.localeCompare(nameB, 'ko');
-                    });
-                    
-                    initializeUIWithData(snapshotData);
-
-                    if (querySnapshot.metadata.hasPendingWrites) {
-                    } else if (auth.currentUser && !auth.currentUser.isAnonymous) {
-                        showToast("데이터가 실시간으로 업데이트되었습니다.", "success");
+                // [수정됨] 인증 상태 변경 감지
+                onAuthStateChanged(auth, (user) => {
+                    if (user && user.email.endsWith(`@${ALLOWED_DOMAIN}`)) {
+                        // 로그인 성공 및 허용된 도메인 사용자
+                        loginScreen.style.display = 'none';
+                        mainContent.style.display = 'block';
+                        setupUserInfo(user);
+                        initializeFirestoreListener();
+                    } else {
+                        // 로그아웃 상태 또는 허용되지 않은 사용자
+                        if (user) signOut(auth); // 허용되지 않은 도메인이면 즉시 로그아웃
+                        loginScreen.style.display = 'flex';
+                        mainContent.style.display = 'none';
+                        userInfoContainer.innerHTML = '';
                     }
-                }, (error) => {
-                    console.error("실시간 데이터 감지 오류: ", error);
-                    showToast("데이터를 실시간으로 가져오는 데 실패했습니다.", "error");
                 });
 
             } catch (e) {
                 console.error("Firebase 초기화 오류:", e);
                 showToast("Firebase 연결에 실패했습니다. 설정을 확인하세요.", "error");
-                document.getElementById('search-box').placeholder = 'Firebase 연결 실패!';
+                loginScreen.innerHTML = `<div class="text-center text-red-500">Firebase 연결 실패! 관리자에게 문의하세요.</div>`;
+                loginScreen.style.display = 'flex';
             }
+
+            // [수정됨] Firestore 리스너 설정 함수
+            let firestoreUnsubscribe = null;
+            function initializeFirestoreListener() {
+                if (firestoreUnsubscribe) firestoreUnsubscribe(); // 기존 리스너가 있다면 중복 방지를 위해 해제
+
+                firestoreUnsubscribe = onSnapshot(mediaCollectionRef, (querySnapshot) => {
+                    let snapshotData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    snapshotData.sort((a, b) => (a.매체명 || '').localeCompare(b.매체명 || '', 'ko'));
+                    initializeUIWithData(snapshotData);
+                }, (error) => {
+                    console.error("실시간 데이터 감지 오류: ", error);
+                    showToast("데이터를 실시간으로 가져오는 데 실패했습니다.", "error");
+                });
+            }
+            
+            // [수정됨] 사용자 정보 표시 및 로그아웃 버튼 설정 함수
+            function setupUserInfo(user) {
+                userInfoContainer.innerHTML = `
+                    <img src="${user.photoURL || 'https://placehold.co/32x32/e2e8f0/64748b?text=P'}" alt="프로필 사진" class="h-8 w-8 rounded-full">
+                    <span class="text-sm font-medium text-gray-700 dark:text-gray-300">${user.displayName || user.email}</span>
+                    <button id="logout-button" class="text-xs text-gray-500 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-500">로그아웃</button>
+                `;
+                document.getElementById('logout-button').addEventListener('click', () => {
+                    signOut(auth).catch(error => showToast("로그아웃 실패", "error"));
+                });
+            }
+
+            // [수정됨] Google 로그인 버튼 클릭 이벤트
+            loginButton.addEventListener('click', () => {
+                const provider = new GoogleAuthProvider();
+                signInWithPopup(auth, provider)
+                    .then((result) => {
+                        const user = result.user;
+                        if (!user.email.endsWith(`@${ALLOWED_DOMAIN}`)) {
+                            showToast("회사 계정으로만 로그인할 수 있습니다.", "error");
+                            signOut(auth);
+                        }
+                    }).catch((error) => {
+                        console.error("Google 로그인 오류:", error);
+                        showToast("Google 로그인에 실패했습니다.", "error");
+                    });
+            });
             
             addNewCardButton.addEventListener('click', () => {
                 if (document.querySelector('[data-is-new="true"]')) {
                     showToast("먼저 작성 중인 새 항목을 저장하거나 취소해주세요.", "error");
                     return;
                 }
-
                 const newItemData = { 매체명: '', 카테고리: [] };
                 const tempCard = document.createElement('div');
                 tempCard.className = 'bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 flex flex-col';
                 tempCard.dataset.isNew = 'true';
                 tempCard.innerHTML = generateCardEditView(newItemData);
-
                 mediaList.prepend(tempCard);
-                
                 tempCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 tempCard.querySelector('input[name="매체명"]')?.focus();
             });
 
             excelUpload.addEventListener('change', (e) => {
                 const file = e.target.files[0];
-                if (!file || !db) {
-                    showToast("Firebase가 아직 연결되지 않았습니다.", "error");
-                    return;
-                };
-
+                if (!file || !db) { showToast("Firebase가 아직 연결되지 않았습니다.", "error"); return; };
                 fileNameSpan.textContent = file.name;
                 const reader = new FileReader();
-                
                 reader.onload = (event) => {
                     try {
                         const data = new Uint8Array(event.target.result);
@@ -577,28 +459,20 @@
                         const sheetName = workbook.SheetNames[0];
                         const worksheet = workbook.Sheets[sheetName];
                         const jsonData = XLSX.utils.sheet_to_json(worksheet);
-                        
                         const processedData = processExcelData(jsonData);
                         uploadDataToFirebase(processedData);
-
                     } catch (error) {
                         console.error("파일 처리 중 오류 발생:", error);
                         showToast("파일을 처리하는 중 오류가 발생했습니다. 파일 형식을 확인해주세요.", "error");
                     }
                 };
-                
-                reader.onerror = (error) => {
-                    console.error("파일 읽기 오류:", error);
-                    showToast("파일을 읽는 데 실패했습니다.", "error");
-                };
-
+                reader.onerror = (error) => { console.error("파일 읽기 오류:", error); showToast("파일을 읽는 데 실패했습니다.", "error"); };
                 reader.readAsArrayBuffer(file);
             });
 
             categoryTagsContainer.addEventListener('click', (e) => {
                 const target = e.target.closest('.category-tag');
                 if (!target) return;
-                
                 target.classList.toggle('bg-blue-600');
                 target.classList.toggle('dark:bg-blue-500');
                 target.classList.toggle('text-white');
@@ -607,20 +481,15 @@
                 target.classList.toggle('dark:bg-gray-700');
                 target.classList.toggle('text-gray-700');
                 target.classList.toggle('dark:text-gray-300');
-
                 filterAndRender();
             });
 
             let debounceTimer;
-            searchBox.addEventListener('input', () => {
-                clearTimeout(debounceTimer);
-                debounceTimer = setTimeout(filterAndRender, 200);
-            });
+            searchBox.addEventListener('input', () => { clearTimeout(debounceTimer); debounceTimer = setTimeout(filterAndRender, 200); });
             
             mediaList.addEventListener('click', async function(e) {
                 const button = e.target.closest('button');
                 if (!button) return;
-
                 const cardElement = button.closest('[id^="card-"], [data-is-new="true"]');
                 if (!cardElement) return;
 
@@ -629,12 +498,8 @@
                     if (copyTextToClipboard(textToCopy)) {
                         showToast(`'${textToCopy}' 복사 완료!`);
                         button.innerHTML = `<svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>`;
-                        setTimeout(() => {
-                            button.innerHTML = `<svg class="w-5 h-5 text-gray-400 hover:text-blue-600 dark:text-gray-500 dark:hover:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>`;
-                        }, 1500);
-                    } else {
-                        showToast('복사에 실패했습니다.', 'error');
-                    }
+                        setTimeout(() => { button.innerHTML = `<svg class="w-5 h-5 text-gray-400 hover:text-blue-600 dark:text-gray-500 dark:hover:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>`; }, 1500);
+                    } else { showToast('복사에 실패했습니다.', 'error'); }
                     return;
                 }
 
@@ -642,59 +507,30 @@
                 const isNew = cardElement.dataset.isNew === 'true';
                 const id = isNew ? null : cardElement.id.replace('card-', '');
                 const item = isNew ? null : mediaData.find(item => item.id === id);
-                
                 if (!isNew && !item) return;
-
                 const docRef = id ? doc(db, mediaCollectionRef.path, id) : null;
 
                 if (action === 'edit') {
                     cardElement.innerHTML = generateCardEditView(item);
                 } else if (action === 'delete') {
-                    cardElement.innerHTML = `
-                        <div class="flex flex-col items-center justify-center h-full p-4">
-                            <p class="text-sm text-gray-800 dark:text-gray-200 text-center font-semibold mb-4">정말로 삭제하시겠습니까?</p>
-                            <div class="flex space-x-2">
-                                <button type="button" data-action="cancel-delete" data-id="${id}" class="px-3 py-1 text-sm rounded-md bg-gray-200 hover:bg-gray-300 dark:bg-gray-600 dark:hover:bg-gray-500 dark:text-gray-200">취소</button>
-                                <button type="button" data-action="confirm-delete" data-id="${id}" class="px-3 py-1 text-sm rounded-md bg-red-600 text-white hover:bg-red-700">확인</button>
-                            </div>
-                        </div>
-                    `;
+                    cardElement.innerHTML = `<div class="flex flex-col items-center justify-center h-full p-4"><p class="text-sm text-gray-800 dark:text-gray-200 text-center font-semibold mb-4">정말로 삭제하시겠습니까?</p><div class="flex space-x-2"><button type="button" data-action="cancel-delete" data-id="${id}" class="px-3 py-1 text-sm rounded-md bg-gray-200 hover:bg-gray-300 dark:bg-gray-600 dark:hover:bg-gray-500 dark:text-gray-200">취소</button><button type="button" data-action="confirm-delete" data-id="${id}" class="px-3 py-1 text-sm rounded-md bg-red-600 text-white hover:bg-red-700">확인</button></div></div>`;
                 } else if (action === 'confirm-delete') {
                     if (!docRef) return;
-                    try {
-                        await deleteDoc(docRef);
-                        showToast('삭제되었습니다.', 'success');
-                    } catch (error) {
-                        console.error("삭제 오류: ", error);
-                        showToast("삭제에 실패했습니다.", "error");
-                        if(item) cardElement.innerHTML = generateCardView(item);
-                    }
+                    try { await deleteDoc(docRef); showToast('삭제되었습니다.', 'success'); } catch (error) { console.error("삭제 오류: ", error); showToast("삭제에 실패했습니다.", "error"); if(item) cardElement.innerHTML = generateCardView(item); }
                 } else if (action === 'cancel') {
-                    if (isNew) {
-                        cardElement.remove();
-                    } else {
-                        cardElement.innerHTML = generateCardView(item);
-                    }
+                    if (isNew) { cardElement.remove(); } else { cardElement.innerHTML = generateCardView(item); }
                 } else if (action === 'save') {
                     const form = cardElement.querySelector('form');
                     const formData = new FormData(form);
                     const updatedItemData = {};
-                    
                     for (let [key, value] of formData.entries()) {
-                        if (key === '카테고리') {
-                            updatedItemData[key] = value.split(',').map(v => v.trim()).filter(Boolean);
-                        } else {
-                            updatedItemData[key] = value;
-                        }
+                        if (key === '카테고리') { updatedItemData[key] = value.split(',').map(v => v.trim()).filter(Boolean); } else { updatedItemData[key] = value; }
                     }
-
                     try {
                         if (isNew) {
-                            // 새 항목 저장
                             await addDoc(mediaCollectionRef, updatedItemData);
-                            cardElement.remove(); // 저장 후 임시 카드 제거 (onSnapshot이 새로 그려줌)
+                            cardElement.remove();
                         } else {
-                            // 기존 항목 업데이트
                             if (!docRef) return;
                             await updateDoc(docRef, updatedItemData);
                         }
@@ -707,26 +543,14 @@
             });
 
             copyAllButton.addEventListener('click', () => {
-                if (currentFilteredData.length === 0) {
-                    showToast('복사할 데이터가 없습니다.', 'error');
-                    return;
-                }
+                if (currentFilteredData.length === 0) { showToast('복사할 데이터가 없습니다.', 'error'); return; }
                 const header = "매체명\t카테고리\t담당자\t직책\t이메일\t팀메일\t연락처\t판매 대행사\t소개서URL";
                 const rows = currentFilteredData.map(item => {
                     const categories = (item.카테고리 || []).join(', ');
-                    return [
-                        item.매체명 || '', categories, item.담당자 || '', item.직책 || '',
-                        item.이메일 || '', item.팀메일 || '', item.연락처 || '',
-                        item['판매 대행사'] || '', item['소개서URL'] || ''
-                    ].join('\t');
+                    return [item.매체명 || '', categories, item.담당자 || '', item.직책 || '', item.이메일 || '', item.팀메일 || '', item.연락처 || '', item['판매 대행사'] || '', item['소개서URL'] || ''].join('\t');
                 });
                 const textToCopy = [header, ...rows].join('\n');
-                
-                if(copyTextToClipboard(textToCopy)) {
-                    showToast(`${currentFilteredData.length}개 매체의 정보가 복사되었습니다!`);
-                } else {
-                     showToast('전체 복사에 실패했습니다.', 'error');
-                }
+                if(copyTextToClipboard(textToCopy)) { showToast(`${currentFilteredData.length}개 매체의 정보가 복사되었습니다!`); } else { showToast('전체 복사에 실패했습니다.', 'error'); }
             });
             
             scrollTopBtn.addEventListener('click', () => { window.scrollTo({ top: 0, behavior: 'smooth' }); });
