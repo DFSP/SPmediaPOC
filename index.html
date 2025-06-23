@@ -230,6 +230,7 @@
             const scrollTopBtn = document.getElementById('scroll-to-top');
             const scrollBottomBtn = document.getElementById('scroll-to-bottom');
             const noResults = document.getElementById('no-results');
+            const copyAllContainer = document.getElementById('copy-all-container');
             
             // --- [수정됨] 함수 선언 순서 재정비 ---
             
@@ -282,7 +283,7 @@
                 });
                 const hasContentToShow = mediaList.hasChildNodes();
                 noResults.classList.toggle('hidden', hasContentToShow);
-                copyAllButton.classList.toggle('hidden', !hasContentToShow || !!newCard);
+                copyAllContainer.classList.toggle('hidden', !hasContentToShow || !!newCard);
             }
             
             function filterAndRender() {
