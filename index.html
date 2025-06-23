@@ -111,6 +111,7 @@
                         </div>
                     </div>
                 </div>
+
                 <h1 class="text-3xl font-bold text-gray-800 dark:text-gray-100 md:text-4xl">[SP]미디어 POC 리스트</h1>
                 <p class="mt-2 text-gray-500 dark:text-gray-400">매체명을 검색하거나 카테고리를 선택하여 담당자 정보를 확인하세요.</p>
             </header>
@@ -128,7 +129,7 @@
                     </div>
                 </div>
 
-                <div class="mb-6 text-right">
+                <div id="add-new-button-wrapper" class="mb-6 text-right hidden">
                     <button id="add-new-card-button" class="bg-blue-600 text-white font-bold text-sm py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors shadow-md inline-flex items-center">
                         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
                         신규 추가
@@ -155,7 +156,7 @@
             </main>
 
             <footer class="text-center mt-12 py-4 border-t border-gray-200 dark:border-gray-700 transition-colors duration-300">
-                 <div class="mb-2">
+                 <div id="admin-upload-section" class="mb-2 hidden">
                      <label for="excel-upload" class="text-xs text-gray-500 dark:text-gray-400 underline cursor-pointer hover:text-gray-700 dark:hover:text-gray-300 transition-colors">
                          데이터파일 관리(SP팀)
                      </label>
@@ -200,6 +201,7 @@
             let currentFilteredData = [];
             let db, auth;
             let mediaCollectionRef;
+            let isAdmin = false; // 사용자가 관리자인지 여부를 저장
             const ALLOWED_DOMAIN = "dfirst-inc.com";
             const ADMIN_EMAIL = "digitalfirst.sp@gmail.com"; 
 
@@ -214,16 +216,16 @@
             const mediaList = document.getElementById('media-list');
             const copyAllButton = document.getElementById('copy-all-button');
             const copyAllContainer = document.getElementById('copy-all-container');
+            const addNewCardButtonWrapper = document.getElementById('add-new-button-wrapper');
             const addNewCardButton = document.getElementById('add-new-card-button');
             const scrollTopBtn = document.getElementById('scroll-to-top');
             const scrollBottomBtn = document.getElementById('scroll-to-bottom');
             const noResults = document.getElementById('no-results');
-            
-            // [수정됨] 드롭다운 메뉴 관련 요소 참조
             const userMenuContainer = document.getElementById('user-menu-container');
             const userMenuButton = document.getElementById('user-menu-button');
             const userMenuDropdown = document.getElementById('user-menu-dropdown');
             const logoutButton = document.getElementById('logout-button');
+            const adminUploadSection = document.getElementById('admin-upload-section');
 
             // --- 함수 선언 ---
             
@@ -238,8 +240,15 @@
                 setTimeout(() => { toast.classList.add('opacity-0'); setTimeout(() => { toast.remove(); }, 500); }, 2000);
             }
 
-            function generateCardView(item) {
+            function generateCardView(item, isAdminUser) {
                 const categoryTagsHtml = (item.카테고리 || []).map(cat => `<span class="text-xs font-semibold text-blue-800 bg-blue-100 dark:text-gray-200 dark:bg-gray-600 px-2 py-1 rounded-full">${cat}</span>`).join('');
+                
+                const adminButtonsHtml = isAdminUser ? `
+                    <div class="flex flex-col items-end space-y-1 flex-shrink-0">
+                        <button data-action="edit" data-id="${item.id}" class="text-xs text-gray-400 hover:text-blue-600 dark:text-gray-500 dark:hover:text-blue-400">수정</button>
+                        <button data-action="delete" data-id="${item.id}" class="text-xs text-red-500 hover:text-red-700 dark:hover:text-red-400">삭제</button>
+                    </div>` : '';
+
                 let infoHtml = '';
                 const createRow = (label, value, clipValue) => {
                     if (!value) return '';
@@ -253,7 +262,16 @@
                 infoHtml += createRow('연락처', item.연락처, item.연락처);
                 infoHtml += createRow('판매 대행사', item['판매 대행사'], item['판매 대행사']);
                 const introButtonHtml = item['소개서URL'] ? `<a href="${item['소개서URL']}" target="_blank" rel="noopener noreferrer" class="w-full text-center block bg-blue-600 text-white font-semibold text-sm py-2 px-4 rounded-lg hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 transition-colors">소개서 다운로드</a>` : `<button class="w-full text-center block bg-gray-300 dark:bg-gray-700 text-gray-500 dark:text-gray-400 font-semibold text-sm py-2 px-4 rounded-lg cursor-not-allowed" disabled>소개서 없음</button>`;
-                return `<div class="flex justify-between items-start gap-2 mb-4"><h2 class="text-xl font-bold text-gray-800 dark:text-gray-100 break-words" title="${item.매체명 || ''}">${item.매체명 || ''}</h2><div class="flex flex-col items-end space-y-1 flex-shrink-0"><button data-action="edit" data-id="${item.id}" class="text-xs text-gray-400 hover:text-blue-600 dark:text-gray-500 dark:hover:text-blue-400">수정</button><button data-action="delete" data-id="${item.id}" class="text-xs text-red-500 hover:text-red-700 dark:hover:text-red-400">삭제</button></div></div><div class="flex-grow"><div class="flex flex-wrap gap-2 mb-4">${categoryTagsHtml}</div><div class="space-y-3 text-sm text-gray-700 dark:text-gray-300">${infoHtml}</div></div><div class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">${introButtonHtml}</div>`;
+                
+                return `<div class="flex justify-between items-start gap-2 mb-4">
+                            <h2 class="text-xl font-bold text-gray-800 dark:text-gray-100 break-words" title="${item.매체명 || ''}">${item.매체명 || ''}</h2>
+                            ${adminButtonsHtml}
+                        </div>
+                        <div class="flex-grow">
+                            <div class="flex flex-wrap gap-2 mb-4">${categoryTagsHtml}</div>
+                            <div class="space-y-3 text-sm text-gray-700 dark:text-gray-300">${infoHtml}</div>
+                        </div>
+                        <div class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">${introButtonHtml}</div>`;
             }
 
             function generateCardEditView(item) {
@@ -271,7 +289,7 @@
                     const card = document.createElement('div');
                     card.id = `card-${item.id}`;
                     card.className = 'bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 flex flex-col transition-transform transform hover:-translate-y-1 transition-colors duration-300';
-                    card.innerHTML = generateCardView(item);
+                    card.innerHTML = generateCardView(item, isAdmin);
                     mediaList.appendChild(card);
                 });
                 const hasContentToShow = mediaList.hasChildNodes();
@@ -437,10 +455,13 @@
                             loginScreen.style.display = 'flex';
                             mainContent.style.display = 'none';
                             userMenuContainer.style.display = 'none';
+                            addNewCardButtonWrapper.classList.add('hidden');
+                            adminUploadSection.classList.add('hidden');
                             return;
                         }
                         
                         const isAuthorized = user.email.endsWith(`@${ALLOWED_DOMAIN}`) || user.email === ADMIN_EMAIL;
+                        isAdmin = user.email === ADMIN_EMAIL;
                         
                         if (isAuthorized) {
                             loginScreen.style.display = 'none';
@@ -448,6 +469,14 @@
                             
                             userMenuContainer.style.display = 'block';
                             setupUserInfo(user);
+
+                            if (isAdmin) {
+                                addNewCardButtonWrapper.classList.remove('hidden');
+                                adminUploadSection.classList.remove('hidden');
+                            } else {
+                                addNewCardButtonWrapper.classList.add('hidden');
+                                adminUploadSection.classList.add('hidden');
+                            }
 
                             getDocs(mediaCollectionRef).then(querySnapshot => {
                                 let initialData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -463,7 +492,6 @@
                             signOut(auth); 
                         }
                     });
-
                 } catch (e) {
                     console.error("Firebase 초기화 오류:", e);
                     showToast("Firebase 연결에 실패했습니다. 설정을 확인하세요.", "error");
@@ -471,17 +499,14 @@
                     loginScreen.style.display = 'flex';
                 }
 
-                // 드롭다운 메뉴 이벤트 리스너 설정
                 userMenuButton.addEventListener('click', (e) => {
                     e.stopPropagation();
                     userMenuDropdown.classList.toggle('hidden');
                 });
-
                 logoutButton.addEventListener('click', (e) => {
                     e.preventDefault();
                     signOut(auth).catch(error => showToast("로그아웃 실패", "error"));
                 });
-
                 window.addEventListener('click', (e) => {
                     if (userMenuButton && userMenuDropdown && !userMenuButton.contains(e.target) && !userMenuDropdown.contains(e.target)) {
                         userMenuDropdown.classList.add('hidden');
@@ -578,9 +603,9 @@
                     cardElement.innerHTML = `<div class="flex flex-col items-center justify-center h-full p-4"><p class="text-sm text-gray-800 dark:text-gray-200 text-center font-semibold mb-4">정말로 삭제하시겠습니까?</p><div class="flex space-x-2"><button type="button" data-action="cancel-delete" data-id="${id}" class="px-3 py-1 text-sm rounded-md bg-gray-200 hover:bg-gray-300 dark:bg-gray-600 dark:hover:bg-gray-500 dark:text-gray-200">취소</button><button type="button" data-action="confirm-delete" data-id="${id}" class="px-3 py-1 text-sm rounded-md bg-red-600 text-white hover:bg-red-700">확인</button></div></div>`;
                 } else if (action === 'confirm-delete') {
                     if (!docRef) return;
-                    try { await deleteDoc(docRef); showToast('삭제되었습니다.', 'success'); } catch (error) { console.error("삭제 오류: ", error); showToast("삭제에 실패했습니다.", "error"); if(item) cardElement.innerHTML = generateCardView(item); }
+                    try { await deleteDoc(docRef); showToast('삭제되었습니다.', 'success'); } catch (error) { console.error("삭제 오류: ", error); showToast("삭제에 실패했습니다.", "error"); if(item) cardElement.innerHTML = generateCardView(item, isAdmin); }
                 } else if (action === 'cancel') {
-                    if (isNew) { cardElement.remove(); } else { cardElement.innerHTML = generateCardView(item); }
+                    if (isNew) { cardElement.remove(); } else { cardElement.innerHTML = generateCardView(item, isAdmin); }
                 } else if (action === 'save') {
                     const form = cardElement.querySelector('form');
                     const formData = new FormData(form);
@@ -627,4 +652,4 @@
         });
     </script>
 </body>
-</ht
+</html>
