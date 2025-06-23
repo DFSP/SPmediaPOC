@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>[SP]미디어 POC 리스트 (Firebase 실시간 연동)</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- SheetJS 라이브러리 (엑셀 업로드 기능 유지를 위해 필요) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         /* Tailwind CSS를 기본으로 사용하되, 추가적인 커스텀 스타일을 적용합니다. */
@@ -43,7 +42,7 @@
         .dark .edit-input {
             background-color: #374151; /* gray-700 */
             border-color: #4b5563;   /* gray-600 */
-            color: #e5e7eb;         /* gray-200 */
+            color: #e5e7eb;          /* gray-200 */
         }
         .edit-input:focus {
             outline: 2px solid transparent;
@@ -77,7 +76,6 @@
 </head>
 <body class="bg-gray-100 dark:bg-gray-900 transition-colors duration-300">
     
-    <!-- 로그인 화면 -->
     <div id="login-screen" class="flex min-h-screen items-center justify-center">
         <div class="w-full max-w-sm rounded-lg bg-white p-8 text-center shadow-xl dark:bg-gray-800">
             <h1 class="mb-4 text-2xl font-bold text-gray-800 dark:text-white">[SP]미디어 POC 리스트</h1>
@@ -89,9 +87,7 @@
         </div>
     </div>
     
-    <!-- 메인 콘텐츠 영역 -->
     <div id="main-content">
-        <!-- 롤링 배너 (상단) -->
         <div class="scrolling-banner-container bg-red-100 text-red-600 dark:bg-red-900/50 dark:text-red-300">
             <div class="scrolling-banner-content py-1 text-xs font-semibold">
                 <span>디지털퍼스트 내부 배포 자료입니다. URL외부 공유 금지.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
@@ -104,19 +100,15 @@
         <div id="toast-container" class="fixed top-5 right-5 z-50"></div>
         
         <div class="container relative mx-auto p-4 md:p-8 max-w-5xl">
-            <!-- [수정됨] 사용자 정보 컨테이너 위치 조정 -->
             <div id="user-info-container" class="fixed right-8 top-12 z-50 flex items-center gap-3 rounded-full bg-white/70 p-2 shadow-md backdrop-blur-sm dark:bg-gray-800/70">
-                <!-- 사용자 정보가 여기에 동적으로 추가됩니다. -->
-            </div>
+                </div>
 
-            <!-- 헤더 -->
             <header class="mb-8 rounded-t-lg border-b-4 border-blue-600 bg-white py-8 text-center shadow-sm transition-colors duration-300 dark:bg-gray-800">
                 <h1 class="text-3xl font-bold text-gray-800 dark:text-gray-100 md:text-4xl">[SP]미디어 POC 리스트</h1>
                 <p class="mt-2 text-gray-500 dark:text-gray-400">매체명을 검색하거나 카테고리를 선택하여 담당자 정보를 확인하세요.</p>
             </header>
             
             <main>
-                <!-- 컨트롤 패널 -->
                 <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md mb-6 transition-colors duration-300">
                     <div class="mb-4">
                         <label for="search-box" class="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-2">매체명/담당자 검색</label>
@@ -125,12 +117,10 @@
                     <div>
                         <label class="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-2">카테고리 선택 (중복 가능)</label>
                         <div id="category-tags-container" class="flex flex-wrap gap-2">
-                            <!-- 카테고리 태그가 동적으로 여기에 추가됩니다. -->
-                        </div>
+                            </div>
                     </div>
                 </div>
 
-                <!-- 신규 추가 버튼 -->
                 <div class="mb-6 text-right">
                     <button id="add-new-card-button" class="bg-blue-600 text-white font-bold text-sm py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors shadow-md inline-flex items-center">
                         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
@@ -138,12 +128,9 @@
                     </button>
                 </div>
 
-                <!-- 결과 영역 -->
                 <div id="media-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    <!-- 매체 정보 카드가 여기에 동적으로 추가됩니다. -->
-                </div>
+                    </div>
                 
-                <!-- 결과 없음 메시지 -->
                 <div id="no-results" class="text-center py-16 px-6 bg-white dark:bg-gray-800 rounded-xl shadow-md hidden transition-colors duration-300">
                     <svg class="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
                          <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
@@ -152,7 +139,6 @@
                     <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Firebase에 데이터가 없거나, 검색 결과가 없습니다.</p>
                 </div>
 
-                <!-- 전체 복사 버튼 컨테이너 -->
                 <div id="copy-all-container" class="mt-8 text-center hidden">
                     <button id="copy-all-button" class="bg-green-600 text-white font-bold text-sm py-2.5 px-5 rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors shadow-lg">
                         <svg class="inline-block w-5 h-5 mr-2 -mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
@@ -175,7 +161,6 @@
             </footer>
         </div>
 
-        <!-- 페이지 이동 버튼 -->
         <div class="fixed bottom-12 right-6 flex flex-col gap-2 z-40">
             <button id="scroll-to-top" title="맨 위로" class="w-10 h-10 bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-full shadow-lg flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-600 transition-opacity opacity-0">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg>
@@ -185,7 +170,6 @@
             </button>
         </div>
 
-        <!-- 롤링 배너 (하단) -->
         <div class="scrolling-banner-container bg-red-100 text-red-600 dark:bg-red-900/50 dark:text-red-300 fixed bottom-0 left-0 z-30">
             <div class="scrolling-banner-content py-1 text-xs font-semibold">
                 <span>디지털퍼스트 내부 배포 자료입니다. URL외부 공유 금지.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
@@ -197,7 +181,6 @@
     </div>
 
 
-    <!-- Firebase SDK 추가 -->
     <script type="module">
         // Firebase Auth 관련 기능 추가
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
@@ -226,13 +209,13 @@
             const categoryTagsContainer = document.getElementById('category-tags-container');
             const mediaList = document.getElementById('media-list');
             const copyAllButton = document.getElementById('copy-all-button');
+            const copyAllContainer = document.getElementById('copy-all-container');
             const addNewCardButton = document.getElementById('add-new-card-button');
             const scrollTopBtn = document.getElementById('scroll-to-top');
             const scrollBottomBtn = document.getElementById('scroll-to-bottom');
             const noResults = document.getElementById('no-results');
-            const copyAllContainer = document.getElementById('copy-all-container');
             
-            // --- [수정됨] 함수 선언 순서 재정비 ---
+            // --- 함수 선언 ---
             
             function showToast(message, type = 'success') {
                 const toastContainer = document.getElementById('toast-container');
@@ -382,13 +365,49 @@
                 }
             }
 
+            // [수정됨 1] Firestore 리스너 함수를 효율적인 방식으로 전체 교체
             let firestoreUnsubscribe = null;
             function initializeFirestoreListener() {
+                // 만약 이미 리스너가 있다면 중복 실행을 막기 위해 기존 리스너를 종료합니다.
                 if (firestoreUnsubscribe) firestoreUnsubscribe(); 
-                firestoreUnsubscribe = onSnapshot(mediaCollectionRef, (querySnapshot) => {
-                    let snapshotData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                    snapshotData.sort((a, b) => (a.매체명 || '').localeCompare(b.매체명 || '', 'ko'));
-                    initializeUIWithData(snapshotData);
+                
+                // onSnapshot을 사용하되, 변경된 문서(docChanges)만 처리하도록 로직을 변경합니다.
+                firestoreUnsubscribe = onSnapshot(mediaCollectionRef, (snapshot) => {
+                    // 변경된 문서가 없으면 아무 작업도 하지 않습니다.
+                    if (snapshot.empty || snapshot.docChanges().length === 0) {
+                        return;
+                    }
+
+                    snapshot.docChanges().forEach((change) => {
+                        const changedData = { id: change.doc.id, ...change.doc.data() };
+
+                        // 변경 타입('added', 'modified', 'removed')에 따라 로컬 데이터를 조작합니다.
+                        if (change.type === "added") {
+                            // 새 데이터 추가
+                            mediaData.push(changedData);
+                        }
+                        if (change.type === "modified") {
+                            // 기존 데이터 수정
+                            const index = mediaData.findIndex(item => item.id === change.doc.id);
+                            if (index > -1) {
+                                mediaData[index] = changedData;
+                            }
+                        }
+                        if (change.type === "removed") {
+                            // 기존 데이터 삭제
+                            mediaData = mediaData.filter(item => item.id !== change.doc.id);
+                        }
+                    });
+
+                    // 데이터 조작 후, 전체 데이터를 다시 정렬하여 정합성을 유지합니다.
+                    mediaData.sort((a, b) => (a.매체명 || '').localeCompare(b.매체명 || '', 'ko'));
+                    
+                    // 정렬된 최신 데이터를 기반으로 UI를 다시 렌더링합니다. (기존 함수 재활용)
+                    // 검색/필터 상태를 유지하면서 화면을 업데이트하기 위해 이 함수를 호출합니다.
+                    filterAndRender(); 
+                    // 카테고리 목록도 업데이트 될 수 있으므로, 카테고리 태그도 다시 그려줍니다.
+                    populateCategories();
+
                 }, (error) => {
                     console.error("실시간 데이터 감지 오류: ", error);
                     showToast("데이터를 실시간으로 가져오는 데 실패했습니다.", "error");
@@ -426,11 +445,30 @@
                         
                         const isAuthorized = user.email.endsWith(`@${ALLOWED_DOMAIN}`) || user.email === ADMIN_EMAIL;
                         
+                        // [수정됨 2] 최초 데이터 로딩 방식을 'getDocs'로 변경
                         if (isAuthorized) {
                             loginScreen.style.display = 'none';
                             mainContent.style.display = 'block';
                             setupUserInfo(user);
-                            initializeFirestoreListener();
+
+                            // --- 데이터 로딩 방식 변경 ---
+                            // 1. getDocs()를 사용해 최초 데이터를 1회만 가져옵니다 (비용 절감)
+                            getDocs(mediaCollectionRef).then(querySnapshot => {
+                                let initialData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                                initialData.sort((a, b) => (a.매체명 || '').localeCompare(b.매체명 || '', 'ko'));
+                                
+                                // 2. 가져온 초기 데이터로 UI를 처음 그립니다.
+                                initializeUIWithData(initialData);
+
+                                // 3. UI를 그린 후, 향후 발생하는 변경사항을 감지하기 위해 리스너를 연결합니다.
+                                initializeFirestoreListener();
+
+                            }).catch(error => {
+                                console.error("최초 데이터 로딩 오류:", error);
+                                showToast("데이터를 가져오는 데 실패했습니다.", "error");
+                            });
+                            // --- 여기까지 변경 ---
+
                         } else {
                             showToast("허용되지 않은 계정입니다.", "error");
                             signOut(auth); 
@@ -583,4 +621,4 @@
         });
     </script>
 </body>
-</ht
+</html>
