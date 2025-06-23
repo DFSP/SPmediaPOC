@@ -135,6 +135,12 @@
                         신규 추가
                     </button>
                 </div>
+                <div id="request-edit-button-wrapper" class="mb-6 text-right hidden">
+                    <a href="https://docs.google.com/spreadsheets/d/1PX7vIIGh5dlIguyhhNJ20kz8fbYOVJgGuEWOf2tAVWA/edit?gid=0#gid=0" target="_blank" rel="noopener noreferrer" class="bg-gray-600 text-white font-bold text-sm py-2 px-4 rounded-lg hover:bg-gray-700 transition-colors shadow-md inline-flex items-center">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                        매체 정보 등록/수정 요청
+                    </a>
+                </div>
 
                 <div id="media-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 </div>
@@ -459,6 +465,7 @@
                             userMenuContainer.style.display = 'none';
                             addNewCardButtonWrapper.classList.add('hidden');
                             adminUploadSection.classList.add('hidden');
+                            document.getElementById('request-edit-button-wrapper').classList.add('hidden'); // 이 줄 추가
                             return;
                         }
                         
@@ -475,9 +482,11 @@
                             if (isAdmin) {
                                 addNewCardButtonWrapper.classList.remove('hidden');
                                 adminUploadSection.classList.remove('hidden');
+                                requestEditButtonWrapper.classList.add('hidden');
                             } else {
                                 addNewCardButtonWrapper.classList.add('hidden');
                                 adminUploadSection.classList.add('hidden');
+                                requestEditButtonWrapper.classList.remove('hidden');
                             }
 
                             getDocs(mediaCollectionRef).then(querySnapshot => {
