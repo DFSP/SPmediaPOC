@@ -298,12 +298,12 @@
             }
             
             function filterAndRender() {
-                const searchTerm = searchBox.value.toLowerCase().trim();
+                const searchTerm = searchBox.value.toLowerCase().replace(/\s/g, '');
                 const selectedCategoryNodes = categoryTagsContainer.querySelectorAll('.bg-blue-600, .dark\\:bg-blue-500');
                 const selectedCategories = Array.from(selectedCategoryNodes).map(node => node.dataset.category);
                 
                 const filteredData = mediaData.filter(item => {
-                    const matchesSearch = (item.매체명 || '').toLowerCase().includes(searchTerm) || (item.담당자 || '').toLowerCase().includes(searchTerm);
+                    const matchesSearch = (item.매체명 || '').toLowerCase().replace(/\s/g, '').includes(searchTerm) || (item.담당자 || '').toLowerCase().replace(/\s/g, '').includes(searchTerm) || (item['판매 대행사'] || '').toLowerCase().replace(/\s/g, '').includes(searchTerm);
                     if (selectedCategories.length === 0) { return matchesSearch; }
                     const matchesCategory = selectedCategories.some(cat => (item.카테고리 || []).includes(cat));
                     return matchesSearch && matchesCategory;
