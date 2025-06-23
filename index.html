@@ -387,7 +387,8 @@
                     });
                     await addBatch.commit();
                     showToast(`${dataToUpload.length}개의 데이터를 성공적으로 업로드했습니다.`, 'success');
-                    
+                    mediaData = [];      // 1. 로컬 데이터를 완전히 비웁니다.
+                    filterAndRender();   // 2. 비어있는 상태로 화면을 즉시 다시 그립니다.
                 } catch (error) {
                     console.error("Firebase 업로드 오류:", error);
                     showToast("Firebase에 데이터를 업로드하는 중 오류가 발생했습니다.", "error");
