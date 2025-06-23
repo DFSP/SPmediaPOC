@@ -383,8 +383,10 @@
 
                         // 변경 타입('added', 'modified', 'removed')에 따라 로컬 데이터를 조작합니다.
                         if (change.type === "added") {
-                            // 새 데이터 추가
-                            mediaData.push(changedData);
+                            const isDuplicate = mediaData.some(item => item.id === change.doc.id);
+                            if (!isDuplicate) {
+                                mediaData.push(changedData);
+                            }
                         }
                         if (change.type === "modified") {
                             // 기존 데이터 수정
