@@ -280,8 +280,7 @@
             });
             const hasContentToShow = mediaList.hasChildNodes();
             noResults.classList.toggle('hidden', hasContentToShow);
-            // [수정됨] 복사하기 버튼 표시 로직 단순화
-            copyAllButton.classList.toggle('hidden', data.length === 0);
+            copyAllButton.classList.toggle('hidden', !hasContentToShow || !!newCard);
         }
         
         function filterAndRender() {
