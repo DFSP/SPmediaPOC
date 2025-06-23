@@ -13,23 +13,18 @@
             font-family: 'Inter', 'Noto Sans KR', sans-serif;
             padding-bottom: 2.5rem; /* 하단 배너 공간 확보 */
         }
-        /* 로그인 화면과 메인 콘텐츠의 기본 상태 설정 */
         #login-screen, #main-content {
             display: none; /* 기본적으로 모두 숨김 */
         }
-        /* 알림 메시지 애니메이션 */
         .toast-notification {
             transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out;
         }
-        /* 카테고리 태그 활성/비활성 상태 트랜지션 */
         .category-tag {
             transition: all 0.2s ease-in-out;
         }
-        /* 파일 업로드 input 숨기기 */
         input[type="file"] {
             display: none;
         }
-        /* 수정 모드 input 스타일 */
         .edit-input {
             width: 100%;
             border: 1px solid #cbd5e1;
@@ -38,11 +33,10 @@
             font-size: 0.875rem;
             line-height: 1.25rem;
         }
-        /* 다크모드 수정 input 스타일 */
         .dark .edit-input {
-            background-color: #374151; /* gray-700 */
-            border-color: #4b5563;   /* gray-600 */
-            color: #e5e7eb;          /* gray-200 */
+            background-color: #374151;
+            border-color: #4b5563;
+            color: #e5e7eb;
         }
         .edit-input:focus {
             outline: 2px solid transparent;
@@ -50,7 +44,6 @@
             border-color: #3b82f6;
             box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.4);
         }
-        /* 롤링 배너 스타일 */
         .scrolling-banner-container {
             width: 100%;
             overflow: hidden;
@@ -66,7 +59,6 @@
         }
     </style>
     <script>
-        // Tailwind CSS 다크모드 설정 (OS 설정을 따름)
         if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
           document.documentElement.classList.add('dark')
         } else {
@@ -100,8 +92,10 @@
         <div id="toast-container" class="fixed top-5 right-5 z-50"></div>
         
         <div class="container relative mx-auto p-4 md:p-8 max-w-5xl">
-            <div id="user-info-container" class="absolute right-8 top-12 z-50 flex items-center gap-3 rounded-full bg-white/70 p-2 shadow-md backdrop-blur-sm dark:bg-gray-800/70">
-                </div>
+            <!-- [수정됨 1] 새로운 드롭다운 메뉴 위치 및 구조. 스크롤 시 따라오지 않도록 'fixed'가 아닌 'absolute' 사용 -->
+            <div id="user-info-dropdown-container" class="absolute top-6 right-8 z-20">
+                <!-- 드롭다운 메뉴의 실제 내용이 여기에 동적으로 채워집니다. -->
+            </div>
 
             <header class="mb-8 rounded-t-lg border-b-4 border-blue-600 bg-white py-8 text-center shadow-sm transition-colors duration-300 dark:bg-gray-800">
                 <h1 class="text-3xl font-bold text-gray-800 dark:text-gray-100 md:text-4xl">[SP]미디어 POC 리스트</h1>
@@ -117,7 +111,7 @@
                     <div>
                         <label class="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-2">카테고리 선택 (중복 가능)</label>
                         <div id="category-tags-container" class="flex flex-wrap gap-2">
-                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -129,7 +123,7 @@
                 </div>
 
                 <div id="media-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    </div>
+                </div>
                 
                 <div id="no-results" class="text-center py-16 px-6 bg-white dark:bg-gray-800 rounded-xl shadow-md hidden transition-colors duration-300">
                     <svg class="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
@@ -182,12 +176,10 @@
 
 
     <script type="module">
-        // Firebase Auth 관련 기능 추가
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, doc, addDoc, getDocs, deleteDoc, updateDoc, onSnapshot, writeBatch } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // 모든 로직을 DOMContentLoaded 이벤트 리스너 안으로 이동
         document.addEventListener('DOMContentLoaded', () => {
 
             // --- 전역 변수 ---
@@ -202,7 +194,7 @@
             const loginScreen = document.getElementById('login-screen');
             const mainContent = document.getElementById('main-content');
             const loginButton = document.getElementById('login-button');
-            const userInfoContainer = document.getElementById('user-info-container');
+            const userInfoDropdownContainer = document.getElementById('user-info-dropdown-container'); // [수정됨] 기존 컨테이너 대신 새 드롭다운 컨테이너 참조
             const excelUpload = document.getElementById('excel-upload');
             const fileNameSpan = document.getElementById('file-name');
             const searchBox = document.getElementById('search-box');
@@ -216,7 +208,6 @@
             const noResults = document.getElementById('no-results');
             
             // --- 함수 선언 ---
-            
             function showToast(message, type = 'success') {
                 const toastContainer = document.getElementById('toast-container');
                 const toast = document.createElement('div');
@@ -365,15 +356,11 @@
                 }
             }
 
-            // [수정됨 1] Firestore 리스너 함수를 효율적인 방식으로 전체 교체
             let firestoreUnsubscribe = null;
             function initializeFirestoreListener() {
-                // 만약 이미 리스너가 있다면 중복 실행을 막기 위해 기존 리스너를 종료합니다.
                 if (firestoreUnsubscribe) firestoreUnsubscribe(); 
                 
-                // onSnapshot을 사용하되, 변경된 문서(docChanges)만 처리하도록 로직을 변경합니다.
                 firestoreUnsubscribe = onSnapshot(mediaCollectionRef, (snapshot) => {
-                    // 변경된 문서가 없으면 아무 작업도 하지 않습니다.
                     if (snapshot.empty || snapshot.docChanges().length === 0) {
                         return;
                     }
@@ -381,7 +368,6 @@
                     snapshot.docChanges().forEach((change) => {
                         const changedData = { id: change.doc.id, ...change.doc.data() };
 
-                        // 변경 타입('added', 'modified', 'removed')에 따라 로컬 데이터를 조작합니다.
                         if (change.type === "added") {
                             const isDuplicate = mediaData.some(item => item.id === change.doc.id);
                             if (!isDuplicate) {
@@ -389,25 +375,19 @@
                             }
                         }
                         if (change.type === "modified") {
-                            // 기존 데이터 수정
                             const index = mediaData.findIndex(item => item.id === change.doc.id);
                             if (index > -1) {
                                 mediaData[index] = changedData;
                             }
                         }
                         if (change.type === "removed") {
-                            // 기존 데이터 삭제
                             mediaData = mediaData.filter(item => item.id !== change.doc.id);
                         }
                     });
 
-                    // 데이터 조작 후, 전체 데이터를 다시 정렬하여 정합성을 유지합니다.
                     mediaData.sort((a, b) => (a.매체명 || '').localeCompare(b.매체명 || '', 'ko'));
                     
-                    // 정렬된 최신 데이터를 기반으로 UI를 다시 렌더링합니다. (기존 함수 재활용)
-                    // 검색/필터 상태를 유지하면서 화면을 업데이트하기 위해 이 함수를 호출합니다.
                     filterAndRender(); 
-                    // 카테고리 목록도 업데이트 될 수 있으므로, 카테고리 태그도 다시 그려줍니다.
                     populateCategories();
 
                 }, (error) => {
@@ -416,14 +396,49 @@
                 });
             }
             
+            // [수정됨 2] 드롭다운 메뉴를 생성하고 이벤트를 연결하는 새로운 setupUserInfo 함수
             function setupUserInfo(user) {
-                userInfoContainer.innerHTML = `
-                    <img src="${user.photoURL || 'https://placehold.co/32x32/e2e8f0/64748b?text=P'}" alt="프로필 사진" class="h-8 w-8 rounded-full">
-                    <span class="text-sm font-medium text-gray-700 dark:text-gray-300">${user.displayName || user.email}</span>
-                    <button id="logout-button" class="text-xs text-gray-500 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-500">로그아웃</button>
+                // 드롭다운 메뉴의 HTML 구조
+                userInfoDropdownContainer.innerHTML = `
+                    <div class="relative">
+                        <button id="user-menu-button" type="button" class="flex h-9 w-9 items-center justify-center rounded-full bg-white/80 dark:bg-gray-800/80 text-gray-500 dark:text-gray-400 ring-1 ring-gray-900/5 dark:ring-white/10 transition hover:bg-gray-200 dark:hover:bg-gray-700 focus:outline-none" aria-expanded="false" aria-haspopup="true">
+                            <span class="sr-only">사용자 메뉴 열기</span>
+                            <img class="h-9 w-9 rounded-full" src="${user.photoURL || `https://placehold.co/40x40/e2e8f0/64748b?text=${(user.displayName || user.email)[0]}`}" alt="프로필">
+                        </button>
+                        <div id="user-menu-dropdown" class="absolute right-0 z-10 mt-2 w-56 origin-top-right rounded-md bg-white dark:bg-gray-800 py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none hidden" role="menu" aria-orientation="vertical" aria-labelledby="user-menu-button" tabindex="-1">
+                            <div class="border-b border-gray-200 dark:border-gray-700 px-4 py-3">
+                                <p class="text-sm font-medium text-gray-800 dark:text-gray-200">${user.displayName || '사용자'}</p>
+                                <p class="truncate text-xs text-gray-500 dark:text-gray-400">${user.email}</p>
+                            </div>
+                            <div class="py-1" role="none">
+                                <a href="#" id="logout-button" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700" role="menuitem" tabindex="-1">로그아웃</a>
+                            </div>
+                        </div>
+                    </div>
                 `;
-                document.getElementById('logout-button').addEventListener('click', () => {
+
+                // 드롭다운 메뉴 제어를 위한 요소 참조 및 이벤트 리스너 설정
+                const menuButton = document.getElementById('user-menu-button');
+                const dropdown = document.getElementById('user-menu-dropdown');
+                const logoutButton = document.getElementById('logout-button');
+
+                // 메뉴 버튼 클릭 시 드롭다운 토글
+                menuButton.addEventListener('click', (e) => {
+                    e.stopPropagation(); // 이벤트 버블링 방지
+                    dropdown.classList.toggle('hidden');
+                });
+
+                // 로그아웃 버튼 클릭
+                logoutButton.addEventListener('click', (e) => {
+                    e.preventDefault();
                     signOut(auth).catch(error => showToast("로그아웃 실패", "error"));
+                });
+
+                // 페이지 다른 곳 클릭 시 드롭다운 닫기
+                window.addEventListener('click', (e) => {
+                    if (!menuButton.contains(e.target) && !dropdown.contains(e.target)) {
+                        dropdown.classList.add('hidden');
+                    }
                 });
             }
 
@@ -441,35 +456,31 @@
                         if (!user) {
                             loginScreen.style.display = 'flex';
                             mainContent.style.display = 'none';
-                            userInfoContainer.innerHTML = '';
+                            userInfoDropdownContainer.innerHTML = ''; // [수정됨] 로그인 정보 컨테이너 비우기
                             return;
                         }
                         
                         const isAuthorized = user.email.endsWith(`@${ALLOWED_DOMAIN}`) || user.email === ADMIN_EMAIL;
                         
-                        // [수정됨 2] 최초 데이터 로딩 방식을 'getDocs'로 변경
                         if (isAuthorized) {
                             loginScreen.style.display = 'none';
                             mainContent.style.display = 'block';
+                            
+                            // 새 디자인의 유저 정보 UI 설정
                             setupUserInfo(user);
 
-                            // --- 데이터 로딩 방식 변경 ---
-                            // 1. getDocs()를 사용해 최초 데이터를 1회만 가져옵니다 (비용 절감)
+                            // 데이터 로딩
                             getDocs(mediaCollectionRef).then(querySnapshot => {
                                 let initialData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                                 initialData.sort((a, b) => (a.매체명 || '').localeCompare(b.매체명 || '', 'ko'));
                                 
-                                // 2. 가져온 초기 데이터로 UI를 처음 그립니다.
                                 initializeUIWithData(initialData);
-
-                                // 3. UI를 그린 후, 향후 발생하는 변경사항을 감지하기 위해 리스너를 연결합니다.
                                 initializeFirestoreListener();
 
                             }).catch(error => {
                                 console.error("최초 데이터 로딩 오류:", error);
                                 showToast("데이터를 가져오는 데 실패했습니다.", "error");
                             });
-                            // --- 여기까지 변경 ---
 
                         } else {
                             showToast("허용되지 않은 계정입니다.", "error");
