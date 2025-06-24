@@ -697,8 +697,8 @@
                 console.error('Unhandled Promise Rejection:', event.reason);
                 showToast('예상치 못한 오류가 발생했습니다.', 'error');
             });
-            initializeScrollingBanners();
-            window.addEventListener('resize', initializeScrollingBanners);
+            
+            setTimeout(initializeScrollingBanners, 100); // 0.1초 뒤에 실행
             
             main();
          });
