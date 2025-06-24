@@ -513,6 +513,10 @@
                         if (isAuthorized) {
                             loginScreen.style.display = 'none';
                             mainContent.style.display = 'block';
+
+                            initializeScrollingBanners();
+                            window.addEventListener('resize', initializeScrollingBanners);
+                            
                             userMenuContainer.style.display = 'block';
                             setupUserInfo(user);
                             
@@ -697,8 +701,6 @@
                 console.error('Unhandled Promise Rejection:', event.reason);
                 showToast('예상치 못한 오류가 발생했습니다.', 'error');
             });
-            
-            setTimeout(initializeScrollingBanners, 100); // 0.1초 뒤에 실행
             
             main();
          });
