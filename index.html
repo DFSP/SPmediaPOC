@@ -228,33 +228,16 @@
             const requestEditButton = document.getElementById('request-edit-button'); 
 
             // --- 함수 선언 ---
-            let resizeTimer;
+            
             function initializeScrollingBanners() {
-                clearTimeout(resizeTimer);
-                resizeTimer = setTimeout(() => {
-                    const banners = document.querySelectorAll('.scrolling-banner-container');
-                    banners.forEach(banner => {
-                        const content = banner.querySelector('.scrolling-banner-content');
-                        if (!content) return;
-                        const templateSpan = content.querySelector('span');
-                        if (!templateSpan) return;
-                        
-                        content.innerHTML = templateSpan.outerHTML;
+                const banners = document.querySelectorAll('.scrolling-banner-container');
+                banners.forEach(banner => {
+                    const content = banner.querySelector('.scrolling-banner-content');
+                    if (!content) return;
 
-                        const bannerWidth = banner.offsetWidth;
-                        const spanWidth = templateSpan.offsetWidth;
-
-                        if (spanWidth <= 0) return;
-
-                        const requiredSpans = Math.ceil(bannerWidth * 2 / spanWidth);
-
-                        let newContent = '';
-                        for (let i = 0; i < requiredSpans; i++) {
-                            newContent += templateSpan.outerHTML;
-                        }
-                        content.innerHTML = newContent;
-                    });
-                }, 100); // 리사이즈 시 과도한 실행 방지 (디바운스)
+                    const originalHTML = content.innerHTML;
+                    content.innerHTML = originalHTML + originalHTML;
+                });
             }
            
             function showToast(message, type = 'success') {
