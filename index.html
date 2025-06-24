@@ -51,14 +51,11 @@
         }
         .scrolling-banner-content {
             display: inline-block;
-        }
-        /* 아래 새로운 규칙을 추가합니다. */
-        .scrolling-banner-content.animate {
             animation: marquee 30s linear infinite;
         }
         @keyframes marquee {
             from { transform: translateX(0%); }
-            to { transform: translateX(var(--scroll-width)); }
+            to { transform: translateX(-50%); }
         }
     </style>
     <script>
@@ -234,50 +231,15 @@
             
             function initializeScrollingBanners() {
                 const banners = document.querySelectorAll('.scrolling-banner-container');
-
                 banners.forEach(banner => {
                     const content = banner.querySelector('.scrolling-banner-content');
                     if (!content) return;
 
-                    // 1. 복제의 기준이 될 원본 span을 찾습니다.
-                    const templateSpan = content.querySelector('span');
-                    if (!templateSpan) return;
-        
-                    // innerHTML을 직접 조작하기 전에 원본을 복제해 둡니다.
-                    const originalSpanHTML = templateSpan.outerHTML;
-                    content.innerHTML = originalSpanHTML; // 내용물을 원본 span 하나로 초기화합니다.
-
-                    const bannerWidth = banner.offsetWidth;
-                    const spanWidth = templateSpan.offsetWidth;
-
-                    if (bannerWidth === 0 || spanWidth === 0) {
-                        // 너비 계산이 불가능하면 함수를 중단합니다.
-                        return;
-                    }
-
-                    // 2. 화면 너비를 채우기 위해 필요한 span의 개수를 계산합니다.
-                    //    (넉넉하게 1개 더 추가합니다.)
-                    const spansToFill = Math.ceil(bannerWidth / spanWidth) + 1;
-            
-                    // 3. 무한 루프를 위해 내용물을 2배로 만듭니다.
-                    const totalSpans = spansToFill * 2;
-                    
-                    let newHTML = '';
-                    for (let i = 0; i < totalSpans; i++) {
-                        newHTML += originalSpanHTML;
-                    }
-                    content.innerHTML = newHTML;
-            
-                    // 4. CSS 애니메이션이 이동해야 할 정확한 거리를 계산합니다.
-                    //    (전체 너비의 절반만큼, 음수 값으로)
-                    const scrollWidth = spansToFill * spanWidth;
-            
-                    // 5. 계산된 이동 거리를 CSS 변수(--scroll-width)에 설정합니다.
-                    content.style.setProperty('--scroll-width', `-${scrollWidth}px`);
-                    content.classList.add('animate');
+                    const originalHTML = content.innerHTML;
+                    content.innerHTML = originalHTML + originalHTML + originalHTML + originalHTML + originalHTML + originalHTML + originalHTML + originalHTML + originalHTML + originalHTML + originalHTML;
                 });
             }
-                       
+           
             function showToast(message, type = 'success') {
                 const toastContainer = document.getElementById('toast-container');
                 const toast = document.createElement('div');
@@ -517,10 +479,6 @@
                         if (isAuthorized) {
                             loginScreen.style.display = 'none';
                             mainContent.style.display = 'block';
-
-                            initializeScrollingBanners();
-                            window.addEventListener('resize', initializeScrollingBanners);
-                            
                             userMenuContainer.style.display = 'block';
                             setupUserInfo(user);
                             
@@ -705,6 +663,8 @@
                 console.error('Unhandled Promise Rejection:', event.reason);
                 showToast('예상치 못한 오류가 발생했습니다.', 'error');
             });
+            initializeScrollingBanners();
+            window.addEventListener('resize', initializeScrollingBanners);
             
             main();
          });
