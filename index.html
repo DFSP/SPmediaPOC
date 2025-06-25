@@ -353,16 +353,8 @@
             }
 
             function updateSearchPlaceholder() {
-                if (mediaData.length > 0) {
-                    const exampleMedia = mediaData[0]?.매체명 || '';
-                    const examplePoc = mediaData[0]?.담당자 || '';
-                    let placeholderText = '예: ';
-                    if (exampleMedia) placeholderText += `${exampleMedia}`;
-                    if (examplePoc) placeholderText += `${exampleMedia ? ', ' : ''}${examplePoc}`;
-                    searchBox.placeholder = placeholderText === '예: ' ? '매체명 또는 담당자 검색...' : placeholderText + '...';
-                } else {
-                    searchBox.placeholder = '데이터가 없습니다. 엑셀 파일을 업로드해주세요.';
-                }
+                // 원하는 고정된 예시 문구를 직접 입력합니다.
+                searchBox.placeholder = '예: 디지털퍼스트, 조성주...'; 
             }
             
             function populateCategories() {
