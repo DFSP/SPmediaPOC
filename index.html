@@ -590,6 +590,7 @@
             
             loginButton.addEventListener('click', () => {
                 const provider = new GoogleAuthProvider();
+                provider.setCustomParameters({ prompt: 'select_account' });
                 signInWithPopup(auth, provider).catch((error) => {
                     console.error("Google 로그인 오류:", error);
                     showToast("Google 로그인에 실패했습니다.", "error");
