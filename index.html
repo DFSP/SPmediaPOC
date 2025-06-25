@@ -309,17 +309,31 @@
             }
             
             function filterAndRender() {
-                const searchTerm = searchBox.value.toLowerCase().replace(/\s/g, '');
+                // 1. 입력된 검색어를 쉼표(,)로 분리하고, 각 검색어의 양쪽 공백을 제거합니다.
+                //    - 예: "11번가,  가제트 팩토리 " -> ["11번가", "가제트 팩토리"]
+                const searchTerms = searchBox.value
+                    .split(',')
+                    .map(term => term.trim().toLowerCase())
+                    .filter(term => term.length > 0); // 빈 검색어는 제외
+            
                 const selectedCategoryNodes = categoryTagsContainer.querySelectorAll('.bg-blue-600, .dark\\:bg-blue-500');
                 const selectedCategories = Array.from(selectedCategoryNodes).map(node => node.dataset.category);
-                
+            
                 const filteredData = mediaData.filter(item => {
-                    const matchesSearch = (item.매체명 || '').toLowerCase().replace(/\s/g, '').includes(searchTerm) || (item.담당자 || '').toLowerCase().replace(/\s/g, '').includes(searchTerm) || (item['판매 대행사'] || '').toLowerCase().replace(/\s/g, '').includes(searchTerm);
-                    if (selectedCategories.length === 0) { return matchesSearch; }
-                    const matchesCategory = selectedCategories.some(cat => (item.카테고리 || []).includes(cat));
+                    // 검색어가 입력되지 않았으면 true를 반환하여 카테고리 필터만 적용되게 합니다.
+                    const matchesSearch = searchTerms.length === 0 ? true : searchTerms.some(term => {
+                        // 2. 매체명, 담당자, 판매 대행사 중 하나라도 검색어를 포함하는지 확인합니다.
+                        const mediaName = (item.매체명 || '').toLowerCase();
+                        const pocName = (item.담당자 || '').toLowerCase();
+                        const agencyName = (item['판매 대행사'] || '').toLowerCase();
+                        return mediaName.includes(term) || pocName.includes(term) || agencyName.includes(term);
+                    });
+            
+                    const matchesCategory = selectedCategories.length === 0 ? true : selectedCategories.some(cat => (item.카테고리 || []).includes(cat));
+                    
                     return matchesSearch && matchesCategory;
                 });
-                
+            
                 currentFilteredData = filteredData;
                 renderMedia(filteredData);
             }
