@@ -51,11 +51,14 @@
         }
         .scrolling-banner-content {
             display: inline-block;
+            
+        .scrolling-banner-content.animate {
             animation: marquee 60s linear infinite;
+            
         }
         @keyframes marquee {
             from { transform: translateX(0%); }
-            to { transform: translateX(-50%); }
+            to { transform: translateX(var(--scroll-width)); }
         }
     </style>
     <script>
@@ -231,12 +234,57 @@
             
             function initializeScrollingBanners() {
                 const banners = document.querySelectorAll('.scrolling-banner-container');
+                
                 banners.forEach(banner => {
                     const content = banner.querySelector('.scrolling-banner-content');
-                    if (!content) return;
-
-                    const originalHTML = content.innerHTML;
-                    content.innerHTML = originalHTML + originalHTML;
+                    const templateSpan = content ? content.querySelector('span') : null;
+            
+                    // 필수 요소가 없으면 함수를 즉시 중단합니다.
+                    if (!content || !templateSpan) {
+                        console.error("배너 HTML 구성요소를 찾을 수 없습니다.", banner);
+                        return;
+                    }
+            
+                    let attempts = 0;
+                    const maxAttempts = 15; // 최대 15번 재시도 (약 0.25초)
+            
+                    function setupAnimation() {
+                        const bannerWidth = banner.offsetWidth;
+                        const spanWidth = templateSpan.offsetWidth;
+            
+                        // 너비가 0이면, 브라우저가 렌더링할 시간을 주고 다시 시도합니다.
+                        if ((bannerWidth === 0 || spanWidth === 0) && attempts < maxAttempts) {
+                            attempts++;
+                            requestAnimationFrame(setupAnimation);
+                            return;
+                        }
+            
+                        // 계속 너비 계산이 안되면, 에러를 남기고 최종 중단합니다.
+                        if (bannerWidth === 0 || spanWidth === 0) {
+                            console.error("배너 너비를 계산할 수 없습니다. 화면에 보이지 않는 상태일 수 있습니다.", banner);
+                            return;
+                        }
+            
+                        // --- 너비 계산 성공 시 아래 로직 실행 ---
+                        const originalSpanHTML = templateSpan.outerHTML;
+                        const spansToFill = Math.ceil(bannerWidth / spanWidth) + 1;
+                        const totalSpans = spansToFill * 2;
+                        
+                        let newHTML = '';
+                        for (let i = 0; i < totalSpans; i++) {
+                            newHTML += originalSpanHTML;
+                        }
+                        content.innerHTML = newHTML;
+                        
+                        const scrollWidth = spansToFill * spanWidth;
+                        content.style.setProperty('--scroll-width', `-${scrollWidth}px`);
+                        
+                        // 모든 계산과 준비가 끝난 후, 마지막에 애니메이션 시작 신호를 보냅니다.
+                        content.classList.add('animate');
+                    }
+            
+                    // 첫 번째 애니메이션 설정 시도
+                    setupAnimation();
                 });
             }
            
