@@ -161,22 +161,16 @@
                     </div>
                 </div>
 
-                <div id="add-new-button-wrapper" class="mb-6 hidden flex justify-between items-center">
-                    <button id="download-all-data-button" class="bg-gray-600 text-white font-bold text-sm py-2 px-4 rounded-lg hover:bg-gray-700 transition-colors shadow-md inline-flex items-center hidden">
-                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                        전체 다운로드
+                <div id="add-new-button-wrapper" class="mb-6 text-right hidden space-x-2">
+                    <button id="add-new-card-button" class="bg-blue-600 text-white font-bold text-sm py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors shadow-md inline-flex items-center">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+                        신규 추가
                     </button>
-                
-                    <div class="space-x-2">
-                        <button id="add-new-card-button" class="bg-blue-600 text-white font-bold text-sm py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors shadow-md inline-flex items-center">
-                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
-                            신규 추가
-                        </button>
-                        <a id="request-edit-button" href="https://docs.google.com/spreadsheets/d/1PX7vIIGh5dlIguyhhNJ20kz8fbYOVJgGuEWOf2tAVWA/edit?gid=0#gid=0" target="_blank" rel="noopener noreferrer" class="bg-blue-600 text-white font-bold text-sm py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors shadow-md inline-flex items-center hidden">
-                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
-                            매체 정보 등록/수정 요청
-                        </a>
-                    </div>
+
+                    <a id="request-edit-button" href="https://docs.google.com/spreadsheets/d/1PX7vIIGh5dlIguyhhNJ20kz8fbYOVJgGuEWOf2tAVWA/edit?gid=0#gid=0" target="_blank" rel="noopener noreferrer" class="bg-blue-600 text-white font-bold text-sm py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors shadow-md inline-flex items-center hidden">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                        매체 정보 등록/수정 요청
+                    </a>
                 </div>
 
                 <div id="media-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -232,52 +226,19 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, doc, setDoc, addDoc, getDocs, deleteDoc, updateDoc, onSnapshot, writeBatch, query, orderBy, limit, startAfter } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        
+        import { getFirestore, collection, doc, setDoc, addDoc, getDocs, deleteDoc, updateDoc, onSnapshot, writeBatch } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
         document.addEventListener('DOMContentLoaded', () => {
-        
+
             // --- 전역 변수 ---
             let mediaData = [];
             let currentFilteredData = [];
             let db, auth;
             let mediaCollectionRef;
-            let isAdmin = false; 
+            let isAdmin = false; // 사용자가 관리자인지 여부를 저장
             const ALLOWED_DOMAIN = "dfirst-inc.com";
-            const ADMIN_EMAIL = "digitalfirst.sp@gmail.com";
-            let isLoading = false;
-            let lastVisibleDoc = null;
-            let firestoreUnsubscribe = null;
-        
-            // --- 페이지네이션 데이터 로딩 함수 ---
-            async function fetchMediaDataPaginated() {
-                if (isLoading) return;
-                isLoading = true;
-            
-                try {
-                    let q;
-                    if (lastVisibleDoc) {
-                        q = query(mediaCollectionRef, orderBy("매체명", "asc"), startAfter(lastVisibleDoc), limit(25));
-                    } else {
-                        q = query(mediaCollectionRef, orderBy("매체명", "asc"), limit(25));
-                    }
-            
-                    const documentSnapshots = await getDocs(q);
-            
-                    if (documentSnapshots.docs.length > 0) {
-                        lastVisibleDoc = documentSnapshots.docs[documentSnapshots.docs.length - 1];
-                        const newMediaData = documentSnapshots.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                        mediaData.push(...newMediaData);
-                        filterAndRender();
-                    } else {
-                        console.log("모든 데이터를 불러왔습니다.");
-                    }
-                } catch (error) {
-                    console.error("페이지네이션 데이터 로딩 오류:", error);
-                    showToast("데이터를 가져오는 중 오류가 발생했습니다.", "error");
-                } finally {
-                    isLoading = false;
-                }
-            }
+            const ADMIN_EMAIL = "digitalfirst.sp@gmail.com"; 
+
             // --- DOM Element 참조 ---
             const loginScreen = document.getElementById('login-screen');
             const mainContent = document.getElementById('main-content');
@@ -682,7 +643,7 @@
                         if (isAuthorized) {
                             loginScreen.style.display = 'none';
                             mainContent.style.display = 'block';
-                        
+
                             initializeScrollingBanners();
                             window.addEventListener('resize', initializeScrollingBanners);
                             
@@ -692,24 +653,24 @@
                             addNewCardButtonWrapper.classList.remove('hidden');
                             if (isAdmin) {
                                 addNewCardButton.classList.remove('hidden');
-                                requestEditButton.classList.remove('hidden'); 
+                                requestEditButton.classList.remove('hidden');
                                 adminUploadSection.classList.remove('hidden');
                             } else {
-                                addNewCardButton.classList.add('hidden');
+                                 addNewCardButton.classList.add('hidden');
                                 requestEditButton.classList.remove('hidden');
                                 adminUploadSection.classList.add('hidden');
                             }
-                        
-                            // 데이터를 초기화하고 첫 페이지만 로드합니다.
-                            mediaData = [];
-                            lastVisibleDoc = null;
-                            fetchMediaDataPaginated();
-                        
-                            // 실시간 리스너는 충돌을 막기 위해 꺼둡니다.
-                            // initializeFirestoreListener(); 
-                        
-                            // 패치노트 리스너는 그대로 실행합니다.
-                            initializePatchNotesListener(isAdmin);
+
+                            getDocs(mediaCollectionRef).then(querySnapshot => {
+                                let initialData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                                initialData.sort((a, b) => (a.매체명 || '').localeCompare(b.매체명 || '', 'ko'));
+                                initializeUIWithData(initialData);
+                                initializeFirestoreListener();
+                                initializePatchNotesListener(isAdmin); // 이 부분이 변경되었습니다.
+                            }).catch(error => {
+                                console.error("최초 데이터 로딩 오류:", error);
+                                showToast("데이터를 가져오는 데 실패했습니다.", "error");
+                            });   
                         } else {
                             showToast("허용되지 않은 계정입니다.", "error");
                             signOut(auth); 
@@ -867,58 +828,12 @@
             cancelPatchNotesButton.addEventListener('click', handleCancelPatchNotes);
             savePatchNotesButton.addEventListener('click', handleSavePatchNotes);
             
-            const downloadAllDataButton = document.getElementById('download-all-data-button');
-            
-            if (isAdmin) {
-                downloadAllDataButton.classList.remove('hidden');
-            }
-            
-            downloadAllDataButton.addEventListener('click', async () => {
-                showToast("전체 데이터를 다운로드 중입니다...");
-                try {
-                    const querySnapshot = await getDocs(mediaCollectionRef);
-                    const allData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                    
-                    const header = "매체명,카테고리,담당자,직책,이메일,팀메일,연락처,판매 대행사,소개서URL";
-                    const rows = allData.map(item => {
-                        const categories = (item.카테고리 || []).join('; ');
-                        return [
-                            item.매체명, categories, item.담당자, item.직책, item.이메일, 
-                            item.팀메일, item.연락처, item['판매 대행사'], item['소개서URL']
-                        ].map(val => `"${(val || '').replace(/"/g, '""')}"`).join(',');
-                    });
-        
-                    const csvContent = "\uFEFF" + header + "\n" + rows.join("\n");
-                    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-                    const link = document.createElement("a");
-                    const url = URL.createObjectURL(blob);
-                    link.setAttribute("href", url);
-                    link.setAttribute("download", "media_poc_list_all.csv");
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                    
-                    showToast("전체 데이터 다운로드를 완료했습니다.", "success");
-                } catch (error) {
-                    console.error("전체 데이터 다운로드 오류:", error);
-                    showToast("다운로드에 실패했습니다.", "error");
-                }
-            });
-                
             scrollTopBtn.addEventListener('click', () => { window.scrollTo({ top: 0, behavior: 'smooth' }); });
             scrollBottomBtn.addEventListener('click', () => { window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' }); });
-            
             window.addEventListener('scroll', () => {
                 scrollTopBtn.classList.toggle('opacity-0', window.scrollY <= 200);
                 scrollBottomBtn.classList.toggle('opacity-0', (window.innerHeight + window.scrollY) >= document.body.offsetHeight - 100);
-        
-                // 페이지 맨 아래 근처에 도달하면 다음 페이지 로드
-                const { scrollTop, scrollHeight, clientHeight } = document.documentElement;
-                if (scrollTop + clientHeight >= scrollHeight - 100 && !isLoading) {
-                    fetchMediaDataPaginated();
-                }
             });
-        
             window.addEventListener('unhandledrejection', function(event) {
                 console.error('Unhandled Promise Rejection:', event.reason);
                 showToast('예상치 못한 오류가 발생했습니다.', 'error');
