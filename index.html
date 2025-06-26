@@ -547,7 +547,7 @@
                 }
             }
 
-            function initializePatchNotesListener() {
+            function initializePatchNotesListener(isAdminUser) {
                 const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
                 // 1단계에서 정의한 Firestore 경로를 사용합니다.
                 const patchNoteRef = doc(db, `artifacts/${appId}/public/data/patchNotes`, 'latest');
@@ -559,13 +559,13 @@
                         patchContent.textContent = data.content || '업데이트 내용 없음';
             
                         // 관리자일 경우에만 '수정' 버튼을 보여줍니다.
-                        if (isAdmin) {
+                        if (isAdminUser) {
                             editPatchNotesButton.classList.remove('hidden');
                         }
                     } else {
                         patchDate.textContent = 'YYYY-MM-DD';
                         patchContent.textContent = '아직 등록된 Patch note가 없습니다. 관리자가 곧 업데이트할 예정입니다.';
-                        if (isAdmin) {
+                        if (isAdminUser) {
                             editPatchNotesButton.classList.remove('hidden');
                         }
                     }
@@ -666,11 +666,11 @@
                                 initialData.sort((a, b) => (a.매체명 || '').localeCompare(b.매체명 || '', 'ko'));
                                 initializeUIWithData(initialData);
                                 initializeFirestoreListener();
-                                initializePatchNotesListener();
+                                initializePatchNotesListener(isAdmin); // 이 부분이 변경되었습니다.
                             }).catch(error => {
                                 console.error("최초 데이터 로딩 오류:", error);
                                 showToast("데이터를 가져오는 데 실패했습니다.", "error");
-                            });
+                            });   
                         } else {
                             showToast("허용되지 않은 계정입니다.", "error");
                             signOut(auth); 
