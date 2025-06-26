@@ -226,7 +226,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, doc, addDoc, getDocs, deleteDoc, updateDoc, onSnapshot, writeBatch } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, doc, setDoc, addDoc, getDocs, deleteDoc, updateDoc, onSnapshot, writeBatch } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         document.addEventListener('DOMContentLoaded', () => {
 
@@ -261,7 +261,16 @@
             const logoutButton = document.getElementById('logout-button');
             const adminUploadSection = document.getElementById('admin-upload-section');
             const requestEditButton = document.getElementById('request-edit-button'); 
-
+            const patchNotesView = document.getElementById('patch-notes-view');
+            const patchNotesEdit = document.getElementById('patch-notes-edit');
+            const editPatchNotesButton = document.getElementById('edit-patch-notes-button');
+            const cancelPatchNotesButton = document.getElementById('cancel-patch-notes-button');
+            const savePatchNotesButton = document.getElementById('save-patch-notes-button');
+            const patchDate = document.getElementById('patch-date');
+            const patchContent = document.getElementById('patch-content');
+            const patchDateInput = document.getElementById('patch-date-input');
+            const patchContentInput = document.getElementById('patch-content-input');
+            
             // --- 함수 선언 ---
             
             function initializeScrollingBanners() {
@@ -538,6 +547,76 @@
                 }
             }
 
+            function initializePatchNotesListener() {
+                const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+                // 1단계에서 정의한 Firestore 경로를 사용합니다.
+                const patchNoteRef = doc(db, `artifacts/${appId}/public/data/patchNotes`, 'latest');
+            
+                onSnapshot(patchNoteRef, (docSnap) => {
+                    if (docSnap.exists()) {
+                        const data = docSnap.data();
+                        patchDate.textContent = data.date || '날짜 정보 없음';
+                        patchContent.textContent = data.content || '업데이트 내용 없음';
+            
+                        // 관리자일 경우에만 '수정' 버튼을 보여줍니다.
+                        if (isAdmin) {
+                            editPatchNotesButton.classList.remove('hidden');
+                        }
+                    } else {
+                        patchDate.textContent = 'YYYY-MM-DD';
+                        patchContent.textContent = '아직 등록된 Patch note가 없습니다. 관리자가 곧 업데이트할 예정입니다.';
+                        if (isAdmin) {
+                            editPatchNotesButton.classList.remove('hidden');
+                        }
+                    }
+                }, (error) => {
+                    console.error("Patch note 실시간 감지 오류:", error);
+                    patchContent.textContent = 'Patch note를 불러오는 중 오류가 발생했습니다.';
+                });
+            }
+            
+            function handleEditPatchNotes() {
+                // 현재 화면에 표시된 내용을 수정창으로 가져옵니다.
+                patchDateInput.value = patchDate.textContent;
+                patchContentInput.value = patchContent.textContent;
+            
+                // 보기 모드는 숨기고, 수정 모드를 보여줍니다.
+                patchNotesView.classList.add('hidden');
+                patchNotesEdit.classList.remove('hidden');
+            }
+            
+            function handleCancelPatchNotes() {
+                // 수정 모드를 숨기고, 보기 모드를 다시 보여줍니다.
+                patchNotesEdit.classList.add('hidden');
+                patchNotesView.classList.remove('hidden');
+            }
+            
+            async function handleSavePatchNotes() {
+                const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+                const patchNoteRef = doc(db, `artifacts/${appId}/public/data/patchNotes`, 'latest');
+                
+                const newDate = patchDateInput.value;
+                const newContent = patchContentInput.value;
+            
+                if (!newDate || !newContent) {
+                    showToast("날짜와 내용을 모두 입력해주세요.", "error");
+                    return;
+                }
+            
+                try {
+                    // setDoc을 사용하면 문서가 없어도 새로 생성해주므로 편리합니다.
+                    await setDoc(patchNoteRef, {
+                        date: newDate,
+                        content: newContent
+                    });
+                    showToast("Patch note가 성공적으로 저장되었습니다.", "success");
+                    handleCancelPatchNotes(); // 저장 후 보기 모드로 전환
+                } catch (error) {
+                    console.error("Patch note 저장 오류:", error);
+                    showToast("저장에 실패했습니다.", "error");
+                }
+            }   
+            
             // --- 메인 실행 로직 ---
             async function main() {
                 try {
@@ -587,6 +666,7 @@
                                 initialData.sort((a, b) => (a.매체명 || '').localeCompare(b.매체명 || '', 'ko'));
                                 initializeUIWithData(initialData);
                                 initializeFirestoreListener();
+                                initializePatchNotesListener();
                             }).catch(error => {
                                 console.error("최초 데이터 로딩 오류:", error);
                                 showToast("데이터를 가져오는 데 실패했습니다.", "error");
@@ -743,6 +823,11 @@
                 const textToCopy = [header, ...rows].join('\n');
                 if(copyTextToClipboard(textToCopy)) { showToast(`${currentFilteredData.length}개 매체의 정보가 복사되었습니다!`); } else { showToast('전체 복사에 실패했습니다.', 'error'); }
             });
+
+            editPatchNotesButton.addEventListener('click', handleEditPatchNotes);
+            cancelPatchNotesButton.addEventListener('click', handleCancelPatchNotes);
+            savePatchNotesButton.addEventListener('click', handleSavePatchNotes);
+            
             scrollTopBtn.addEventListener('click', () => { window.scrollTo({ top: 0, behavior: 'smooth' }); });
             scrollBottomBtn.addEventListener('click', () => { window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' }); });
             window.addEventListener('scroll', () => {
