@@ -629,44 +629,35 @@
                         isAdmin = user.email === ADMIN_EMAIL;
                         
                         if (isAuthorized) {
+                            // --- 1. 로그인 성공 시 공통으로 실행할 코드 ---
                             loginScreen.style.display = 'none';
                             mainContent.style.display = 'block';
-                            
+                        
                             initializeScrollingBanners();
                             window.addEventListener('resize', initializeScrollingBanners);
-                            
                             initializePatchNotes(); 
                         
                             userMenuContainer.style.display = 'block';
                             setupUserInfo(user);
                             
                             addNewCardButtonWrapper.classList.remove('hidden');
+                            
+                            // --- 2. 관리자/일반 사용자 권한에 따라 버튼 보이기/숨기기 ---
                             if (isAdmin) {
+                                // 관리자일 경우
                                 addNewCardButton.classList.remove('hidden');
                                 requestEditButton.classList.add('hidden');
                                 adminUploadSection.classList.remove('hidden');
-                                
-                                // ↓↓↓↓↓↓ '수정' 버튼을 보이게 하는 이 줄을 추가하세요! ↓↓↓↓↓↓
                                 editPatchNotesButton.classList.remove('hidden');
                             } else {
-
-                            initializeScrollingBanners();
-                            window.addEventListener('resize', initializeScrollingBanners);
-                            
-                            userMenuContainer.style.display = 'block';
-                            setupUserInfo(user);
-                            
-                            addNewCardButtonWrapper.classList.remove('hidden');
-                            if (isAdmin) {
-                                addNewCardButton.classList.remove('hidden');
-                                requestEditButton.classList.add('hidden');
-                                adminUploadSection.classList.remove('hidden');
-                            } else {
-                                 addNewCardButton.classList.add('hidden');
+                                // 일반 사용자일 경우
+                                addNewCardButton.classList.add('hidden');
                                 requestEditButton.classList.remove('hidden');
                                 adminUploadSection.classList.add('hidden');
+                                editPatchNotesButton.classList.add('hidden');
                             }
-
+                        
+                            // --- 3. 데이터베이스에서 데이터 가져오기 ---
                             getDocs(mediaCollectionRef).then(querySnapshot => {
                                 let initialData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                                 initialData.sort((a, b) => (a.매체명 || '').localeCompare(b.매체명 || '', 'ko'));
@@ -676,7 +667,9 @@
                                 console.error("최초 데이터 로딩 오류:", error);
                                 showToast("데이터를 가져오는 데 실패했습니다.", "error");
                             });
+                        
                         } else {
+                            // 허용되지 않은 계정일 경우
                             showToast("허용되지 않은 계정입니다.", "error");
                             signOut(auth); 
                         }
