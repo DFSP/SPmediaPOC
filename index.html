@@ -842,40 +842,48 @@
                 console.error('Unhandled Promise Rejection:', event.reason);
                 showToast('예상치 못한 오류가 발생했습니다.', 'error');
             });
-            // --- 추가할 코드 시작 ---
+            // --- 수정된 코드 시작 ---
             const themeToggleBtn = document.getElementById('theme-toggle');
             const themeToggleDarkIcon = document.getElementById('theme-toggle-dark-icon');
             const themeToggleLightIcon = document.getElementById('theme-toggle-light-icon');
             
-            // 페이지 로드 시 현재 테마에 맞는 아이콘 표시
-            const isDark = document.documentElement.classList.contains('dark');
-            if (isDark) {
-                themeToggleLightIcon.classList.remove('hidden');
-            } else {
-                themeToggleDarkIcon.classList.remove('hidden');
+            function updateTheme() {
+                const isDark = document.documentElement.classList.contains('dark');
+                if (isDark) {
+                    themeToggleLightIcon.classList.remove('hidden');
+                    themeToggleDarkIcon.classList.add('hidden');
+                } else {
+                    themeToggleDarkIcon.classList.remove('hidden');
+                    themeToggleLightIcon.classList.add('hidden');
+                }
             }
             
-            // 버튼 클릭 시 테마 및 아이콘 전환
-            themeToggleBtn.addEventListener('click', () => {
-                // 테마 전환
-                document.documentElement.classList.toggle('dark');
+            // 페이지 로드 시 로컬 스토리지 또는 시스템 설정에 따라 테마 적용
+            if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
             
-                // 로컬 스토리지에 테마 저장
+            // 초기 아이콘 상태 업데이트
+            updateTheme();
+            
+            // 버튼 클릭 시 테마 전환 및 로컬 스토리지 업데이트
+            themeToggleBtn.addEventListener('click', () => {
+                document.documentElement.classList.toggle('dark');
                 if (document.documentElement.classList.contains('dark')) {
                     localStorage.theme = 'dark';
                 } else {
                     localStorage.theme = 'light';
                 }
-            
-                // 아이콘 전환
-                themeToggleDarkIcon.classList.toggle('hidden');
-                themeToggleLightIcon.classList.toggle('hidden');
+                updateTheme(); // 아이콘 업데이트 함수 호출
             });
-            // --- 추가할 코드 끝 ---
+            // --- 수정된 코드 끝 ---
             
             main();
         });
     </script>
 </body>
 </html>
+
 
