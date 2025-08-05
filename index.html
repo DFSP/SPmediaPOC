@@ -53,7 +53,6 @@
             display: inline-block;
         }
         .scrolling-banner-content.animate {
-            /* 매우 빠르게(3초) 설정해서 조금이라도 움직이는지 바로 확인합니다 */
             animation: marquee 80s linear infinite;
         }
         @keyframes marquee {
@@ -63,10 +62,11 @@
         
     </style>
     <script>
+        // 페이지 로드 시 테마 설정
         if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-          document.documentElement.classList.add('dark')
+            document.documentElement.classList.add('dark')
         } else {
-          document.documentElement.classList.remove('dark')
+            document.documentElement.classList.remove('dark')
         }
     </script>
 </head>
@@ -107,6 +107,13 @@
                                 <p class="truncate text-xs text-gray-500 dark:text-gray-400" id="user-menu-email"></p>
                             </div>
                             <div class="py-1" role="none">
+                                <a href="#" id="theme-toggle-button" class="flex items-center justify-between px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700" role="menuitem" tabindex="-1">
+                                    <span>화면 모드 변경</span>
+                                    <div class="flex items-center">
+                                       <svg id="theme-icon-light" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                                       <svg id="theme-icon-dark" class="h-5 w-5 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+                                    </div>
+                                </a>
                                 <a href="#" id="logout-button" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700" role="menuitem" tabindex="-1">로그아웃</a>
                             </div>
                         </div>
@@ -115,10 +122,10 @@
 
                 <h1 class="text-3xl font-bold text-gray-800 dark:text-gray-100 md:text-4xl" title="Crafted by team.SP">[디지털퍼스트] 미디어 POC 리스트</h1>
                 <p class="mt-2 text-gray-500 dark:text-gray-400">매체명을 검색하거나 카테고리를 선택하여 담당자 정보를 확인하세요.</p>
-            </header>
+                <p id="last-updated-timestamp" class="mt-1 text-xs text-gray-400 dark:text-gray-500">업데이트 정보 로딩 중...</p>
+                </header>
 
-             <!-- ========== Patch Notes Section ========== -->
-            <div id="patch-notes-section" class="mb-6 rounded-lg bg-gray-50 p-3 shadow-sm dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700/60">
+             <div id="patch-notes-section" class="mb-6 rounded-lg bg-gray-50 p-3 shadow-sm dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700/60">
                 <div class="flex items-center">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 flex-shrink-0 text-gray-500 dark:text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                          <path stroke-linecap="round" stroke-linejoin="round" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-2.036 9.284-5.117M15.18 3a3.001 3.001 0 00-2.18.879M15.879 21a3.001 3.001 0 002.18-.879" />
@@ -130,7 +137,6 @@
                     <p class="text-xs font-medium text-gray-500 dark:text-gray-400" id="patch-date">로딩 중...</p>
                     <p class="mt-1 whitespace-pre-wrap text-sm text-gray-700 dark:text-gray-300" id="patch-content">로딩 중...</p>
                 </div>
-                <!-- 관리자용 수정 영역 (초기에는 숨겨져 있음) -->
                 <div id="patch-notes-edit" class="hidden mt-2 border-t border-gray-200 dark:border-gray-700 pt-2">
                     <div class="mb-2">
                         <label for="patch-date-input" class="text-xs font-medium text-gray-500 dark:text-gray-400">날짜</label>
@@ -146,8 +152,6 @@
                     </div>
                 </div>
             </div>
-            <!-- ========================================= -->
-
             <main>
                 <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md mb-6 transition-colors duration-300">
                     <div class="mb-4">
@@ -194,14 +198,14 @@
 
             <footer class="text-center mt-12 py-4 border-t border-gray-200 dark:border-gray-700 transition-colors duration-300">
                  <div id="admin-upload-section" class="mb-2 hidden">
-                     <label for="excel-upload" class="text-xs text-gray-500 dark:text-gray-400 underline cursor-pointer hover:text-gray-700 dark:hover:text-gray-300 transition-colors">
-                         데이터파일 관리(SP팀)
-                     </label>
-                     <input type="file" id="excel-upload" accept=".xlsx, .xls, .csv">
-                     <span id="file-name" class="ml-2 text-xs text-gray-500"></span>
+                       <label for="excel-upload" class="text-xs text-gray-500 dark:text-gray-400 underline cursor-pointer hover:text-gray-700 dark:hover:text-gray-300 transition-colors">
+                           데이터파일 관리(SP팀)
+                       </label>
+                       <input type="file" id="excel-upload" accept=".xlsx, .xls, .csv">
+                       <span id="file-name" class="ml-2 text-xs text-gray-500"></span>
                  </div>
                  <div>
-                     <p class="text-xs text-gray-400 dark:text-gray-500">copyright © digitalFirst All Right Reserved.</p>
+                       <p class="text-xs text-gray-400 dark:text-gray-500">copyright © digitalFirst All Right Reserved.</p>
                  </div>
             </footer>
         </div>
@@ -235,7 +239,7 @@
             let currentFilteredData = [];
             let db, auth;
             let mediaCollectionRef;
-            let isAdmin = false; // 사용자가 관리자인지 여부를 저장
+            let isAdmin = false;
             const ALLOWED_DOMAIN = "dfirst-inc.com";
             const ADMIN_EMAILS = ["digitalfirst.sp@gmail.com", "simpson0270@gmail.com"];
 
@@ -271,6 +275,16 @@
             const patchDateInput = document.getElementById('patch-date-input');
             const patchContentInput = document.getElementById('patch-content-input');
             
+            // ===== 기능 1 추가 시작 =====
+            const themeToggleButton = document.getElementById('theme-toggle-button');
+            const themeIconLight = document.getElementById('theme-icon-light');
+            const themeIconDark = document.getElementById('theme-icon-dark');
+            // ===== 기능 1 추가 종료 =====
+
+            // ===== 기능 2 추가 시작 =====
+            const lastUpdatedTimestampEl = document.getElementById('last-updated-timestamp');
+            // ===== 기능 2 추가 종료 =====
+            
             // --- 함수 선언 ---
             
             function initializeScrollingBanners() {
@@ -280,33 +294,29 @@
                     const content = banner.querySelector('.scrolling-banner-content');
                     const templateSpan = content ? content.querySelector('span') : null;
             
-                    // 필수 요소가 없으면 함수를 즉시 중단합니다.
                     if (!content || !templateSpan) {
                         console.error("배너 HTML 구성요소를 찾을 수 없습니다.", banner);
                         return;
                     }
             
                     let attempts = 0;
-                    const maxAttempts = 15; // 최대 15번 재시도 (약 0.25초)
+                    const maxAttempts = 15;
             
                     function setupAnimation() {
                         const bannerWidth = banner.offsetWidth;
                         const spanWidth = templateSpan.offsetWidth;
             
-                        // 너비가 0이면, 브라우저가 렌더링할 시간을 주고 다시 시도합니다.
                         if ((bannerWidth === 0 || spanWidth === 0) && attempts < maxAttempts) {
                             attempts++;
                             requestAnimationFrame(setupAnimation);
                             return;
                         }
             
-                        // 계속 너비 계산이 안되면, 에러를 남기고 최종 중단합니다.
                         if (bannerWidth === 0 || spanWidth === 0) {
                             console.error("배너 너비를 계산할 수 없습니다. 화면에 보이지 않는 상태일 수 있습니다.", banner);
                             return;
                         }
             
-                        // --- 너비 계산 성공 시 아래 로직 실행 ---
                         const originalSpanHTML = templateSpan.outerHTML;
                         const spansToFill = Math.ceil(bannerWidth / spanWidth) + 1;
                         const totalSpans = spansToFill * 2;
@@ -320,15 +330,13 @@
                         const scrollWidth = spansToFill * spanWidth;
                         content.style.setProperty('--scroll-width', `-${scrollWidth}px`);
                         
-                        // 모든 계산과 준비가 끝난 후, 마지막에 애니메이션 시작 신호를 보냅니다.
                         content.classList.add('animate');
                     }
             
-                    // 첫 번째 애니메이션 설정 시도
                     setupAnimation();
                 });
             }
-           
+            
             function showToast(message, type = 'success') {
                 const toastContainer = document.getElementById('toast-container');
                 const toast = document.createElement('div');
@@ -398,10 +406,9 @@
             }
             
             function filterAndRender() {
-                // 1. 입력된 검색어에서 쉼표로 분리 후, 각 단어의 모든 공백을 제거합니다.
                 const searchTerms = searchBox.value
                     .split(',')
-                    .map(term => term.trim().toLowerCase().replace(/\s/g, '')) // .replace() 추가
+                    .map(term => term.trim().toLowerCase().replace(/\s/g, ''))
                     .filter(term => term.length > 0);
             
                 const selectedCategoryNodes = categoryTagsContainer.querySelectorAll('.bg-blue-600, .dark\\:bg-blue-500');
@@ -409,10 +416,9 @@
             
                 const filteredData = mediaData.filter(item => {
                     const matchesSearch = searchTerms.length === 0 ? true : searchTerms.some(term => {
-                        // 2. 비교 대상 데이터에서도 모든 공백을 제거한 후, 포함 여부를 확인합니다.
-                        const mediaName = (item.매체명 || '').toLowerCase().replace(/\s/g, ''); // .replace() 추가
-                        const pocName = (item.담당자 || '').toLowerCase().replace(/\s/g, '');   // .replace() 추가
-                        const agencyName = (item['판매 대행사'] || '').toLowerCase().replace(/\s/g, ''); // .replace() 추가
+                        const mediaName = (item.매체명 || '').toLowerCase().replace(/\s/g, '');
+                        const pocName = (item.담당자 || '').toLowerCase().replace(/\s/g, '');
+                        const agencyName = (item['판매 대행사'] || '').toLowerCase().replace(/\s/g, '');
                         
                         return mediaName.includes(term) || pocName.includes(term) || agencyName.includes(term);
                     });
@@ -441,7 +447,6 @@
             }
 
             function updateSearchPlaceholder() {
-                // 원하는 고정된 예시 문구를 직접 입력합니다.
                 searchBox.placeholder = '예: 디지털퍼스트, 조성주...'; 
             }
             
@@ -478,6 +483,20 @@
                 return success;
             }
 
+            // ===== 기능 2 추가 시작 =====
+            // 최종 업데이트 시간을 Firestore에 기록하는 함수
+            async function updateLastUpdatedTimestamp() {
+                const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+                // 데이터와 별도의 경로에 메타데이터를 저장
+                const metaRef = doc(db, `artifacts/${appId}/public/data/metadata`, 'lastUpdated');
+                try {
+                    await setDoc(metaRef, { timestamp: new Date() });
+                } catch (error) {
+                    console.error("최종 업데이트 시간 기록 실패:", error);
+                }
+            }
+            // ===== 기능 2 추가 종료 =====
+
             async function uploadDataToFirebase(dataToUpload) {
                 showToast('데이터를 Firebase에 업로드 중입니다...', 'success');
                 try {
@@ -491,9 +510,14 @@
                         addBatch.set(docRef, item);
                     });
                     await addBatch.commit();
+                    
+                    // ===== 기능 2 연동 시작 =====
+                    await updateLastUpdatedTimestamp(); // 업로드 성공 후 시간 기록
+                    // ===== 기능 2 연동 종료 =====
+
                     showToast(`${dataToUpload.length}개의 데이터를 성공적으로 업로드했습니다.`, 'success');
-                    mediaData = [];      // 1. 로컬 데이터를 완전히 비웁니다.
-                    filterAndRender();   // 2. 비어있는 상태로 화면을 즉시 다시 그립니다.
+                    mediaData = [];
+                    filterAndRender();
                 } catch (error) {
                     console.error("Firebase 업로드 오류:", error);
                     showToast("Firebase에 데이터를 업로드하는 중 오류가 발생했습니다.", "error");
@@ -549,7 +573,6 @@
 
             function initializePatchNotesListener(isAdminUser) {
                 const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-                // 1단계에서 정의한 Firestore 경로를 사용합니다.
                 const patchNoteRef = doc(db, `artifacts/${appId}/public/data/patchNotes`, 'latest');
             
                 onSnapshot(patchNoteRef, (docSnap) => {
@@ -558,7 +581,6 @@
                         patchDate.textContent = data.date || '날짜 정보 없음';
                         patchContent.textContent = data.content || '업데이트 내용 없음';
             
-                        // 관리자일 경우에만 '수정' 버튼을 보여줍니다.
                         if (isAdminUser) {
                             editPatchNotesButton.classList.remove('hidden');
                         }
@@ -575,18 +597,41 @@
                 });
             }
             
+            // ===== 기능 2 추가 시작 =====
+            function initializeLastUpdatedListener() {
+                const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+                const metaRef = doc(db, `artifacts/${appId}/public/data/metadata`, 'lastUpdated');
+
+                onSnapshot(metaRef, (docSnap) => {
+                    if (docSnap.exists()) {
+                        const data = docSnap.data();
+                        // Firestore Timestamp를 JavaScript Date 객체로 변환
+                        const date = data.timestamp.toDate();
+                        
+                        // 날짜 포맷팅 (YYYY-MM-DD HH:mm:ss)
+                        const pad = (num) => num.toString().padStart(2, '0');
+                        const formattedDate = `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+                        
+                        lastUpdatedTimestampEl.textContent = `최종 업데이트: ${formattedDate}`;
+                    } else {
+                        lastUpdatedTimestampEl.textContent = '업데이트 기록이 없습니다.';
+                    }
+                }, (error) => {
+                    console.error("최종 업데이트 시간 감지 오류:", error);
+                    lastUpdatedTimestampEl.textContent = '업데이트 정보 로드 실패';
+                });
+            }
+            // ===== 기능 2 추가 종료 =====
+
             function handleEditPatchNotes() {
-                // 현재 화면에 표시된 내용을 수정창으로 가져옵니다.
                 patchDateInput.value = patchDate.textContent;
                 patchContentInput.value = patchContent.textContent;
             
-                // 보기 모드는 숨기고, 수정 모드를 보여줍니다.
                 patchNotesView.classList.add('hidden');
                 patchNotesEdit.classList.remove('hidden');
             }
             
             function handleCancelPatchNotes() {
-                // 수정 모드를 숨기고, 보기 모드를 다시 보여줍니다.
                 patchNotesEdit.classList.add('hidden');
                 patchNotesView.classList.remove('hidden');
             }
@@ -604,18 +649,17 @@
                 }
             
                 try {
-                    // setDoc을 사용하면 문서가 없어도 새로 생성해주므로 편리합니다.
                     await setDoc(patchNoteRef, {
                         date: newDate,
                         content: newContent
                     });
                     showToast("Patch note가 성공적으로 저장되었습니다.", "success");
-                    handleCancelPatchNotes(); // 저장 후 보기 모드로 전환
+                    handleCancelPatchNotes();
                 } catch (error) {
                     console.error("Patch note 저장 오류:", error);
                     showToast("저장에 실패했습니다.", "error");
                 }
-            }   
+            }    
             
             // --- 메인 실행 로직 ---
             async function main() {
@@ -650,6 +694,10 @@
                             userMenuContainer.style.display = 'block';
                             setupUserInfo(user);
                             
+                            // ===== 기능 1 연동 시작 =====
+                            updateThemeIcons(); // 페이지 로드 시 현재 테마에 맞는 아이콘 표시
+                            // ===== 기능 1 연동 종료 =====
+
                             addNewCardButtonWrapper.classList.remove('hidden');
                             if (isAdmin) {
                                 addNewCardButton.classList.remove('hidden');
@@ -666,7 +714,10 @@
                                 initialData.sort((a, b) => (a.매체명 || '').localeCompare(b.매체명 || '', 'ko'));
                                 initializeUIWithData(initialData);
                                 initializeFirestoreListener();
-                                initializePatchNotesListener(isAdmin); // 이 부분이 변경되었습니다.
+                                initializePatchNotesListener(isAdmin);
+                                // ===== 기능 2 연동 시작 =====
+                                initializeLastUpdatedListener(); // 최종 업데이트 시간 리스너 초기화
+                                // ===== 기능 2 연동 종료 =====
                             }).catch(error => {
                                 console.error("최초 데이터 로딩 오류:", error);
                                 showToast("데이터를 가져오는 데 실패했습니다.", "error");
@@ -788,7 +839,13 @@
                     cardElement.innerHTML = `<div class="flex flex-col items-center justify-center h-full p-4"><p class="text-sm text-gray-800 dark:text-gray-200 text-center font-semibold mb-4">정말로 삭제하시겠습니까?</p><div class="flex space-x-2"><button type="button" data-action="cancel-delete" data-id="${id}" class="px-3 py-1 text-sm rounded-md bg-gray-200 hover:bg-gray-300 dark:bg-gray-600 dark:hover:bg-gray-500 dark:text-gray-200">취소</button><button type="button" data-action="confirm-delete" data-id="${id}" class="px-3 py-1 text-sm rounded-md bg-red-600 text-white hover:bg-red-700">확인</button></div></div>`;
                 } else if (action === 'confirm-delete') {
                     if (!docRef) return;
-                    try { await deleteDoc(docRef); showToast('삭제되었습니다.', 'success'); } catch (error) { console.error("삭제 오류: ", error); showToast("삭제에 실패했습니다.", "error"); if(item) cardElement.innerHTML = generateCardView(item, isAdmin); }
+                    try { 
+                        await deleteDoc(docRef); 
+                        await updateLastUpdatedTimestamp(); // ===== 기능 2 연동 =====
+                        showToast('삭제되었습니다.', 'success'); 
+                    } catch (error) { console.error("삭제 오류: ", error); showToast("삭제에 실패했습니다.", "error"); if(item) cardElement.innerHTML = generateCardView(item, isAdmin); }
+                } else if (action === 'cancel-delete') { // 'cancel-delete' 액션 처리 추가
+                    if(item) cardElement.innerHTML = generateCardView(item, isAdmin);
                 } else if (action === 'cancel') {
                     if (isNew) { cardElement.remove(); } else { cardElement.innerHTML = generateCardView(item, isAdmin); }
                 } else if (action === 'save') {
@@ -806,6 +863,7 @@
                             if (!docRef) return;
                             await updateDoc(docRef, updatedItemData);
                         }
+                        await updateLastUpdatedTimestamp(); // ===== 기능 2 연동 =====
                         showToast('성공적으로 저장되었습니다.', 'success');
                     } catch (error) {
                         console.error("저장 오류: ", error);
@@ -827,6 +885,34 @@
             editPatchNotesButton.addEventListener('click', handleEditPatchNotes);
             cancelPatchNotesButton.addEventListener('click', handleCancelPatchNotes);
             savePatchNotesButton.addEventListener('click', handleSavePatchNotes);
+
+            // ===== 기능 1 추가 시작 =====
+            function updateThemeIcons() {
+                if (document.documentElement.classList.contains('dark')) {
+                    themeIconLight.classList.add('hidden');
+                    themeIconDark.classList.remove('hidden');
+                } else {
+                    themeIconLight.classList.remove('hidden');
+                    themeIconDark.classList.add('hidden');
+                }
+            }
+
+            themeToggleButton.addEventListener('click', (e) => {
+                e.preventDefault();
+                // <html> 태그의 클래스를 토글
+                document.documentElement.classList.toggle('dark');
+                
+                // localStorage에 상태 저장
+                if (document.documentElement.classList.contains('dark')) {
+                    localStorage.theme = 'dark';
+                } else {
+                    localStorage.theme = 'light';
+                }
+                
+                // 아이콘 업데이트
+                updateThemeIcons();
+            });
+            // ===== 기능 1 추가 종료 =====
             
             scrollTopBtn.addEventListener('click', () => { window.scrollTo({ top: 0, behavior: 'smooth' }); });
             scrollBottomBtn.addEventListener('click', () => { window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' }); });
