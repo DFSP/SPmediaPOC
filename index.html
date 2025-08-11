@@ -77,82 +77,7 @@
             from { transform: translateX(0); }
             to { transform: translateX(var(--scroll-width)); }
         }
-        /* ✨ 여기에 최종 수정된 코드를 붙여넣으세요 */
         
-        /* --- 순환 테두리 효과 --- */
-        .card-gradient-border {
-            position: relative;
-            overflow: hidden;
-            z-index: 1;
-        }
-        .card-gradient-border::before {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 200%;
-            height: 200%;
-            z-index: -2;
-            /* 라이트 모드: 반투명 녹색 */
-            background: conic-gradient(
-                transparent 20%, rgba(22, 163, 74, 0.7), rgba(34, 197, 94, 0.9), rgba(22, 163, 74, 0.7), transparent 80%
-            );
-            transform-origin: center center;
-            animation: rotate-gradient 4s linear infinite;
-        }
-        /* 다크 모드: 모노톤 */
-        .dark .card-gradient-border::before {
-             background: conic-gradient(
-                transparent 20%, #6b7280, #d1d5db, #9ca3af, #6b7280, transparent 80%
-            );
-        }
-        .card-gradient-border::after {
-            content: '';
-            position: absolute;
-            top: 2px;
-            left: 2px;
-            right: 2px;
-            bottom: 2px;
-            z-index: -1;
-            border-radius: 0.7rem;
-            background-color: #ffffff;
-        }
-        .dark .card-gradient-border::after {
-            background-color: #1f2937;
-        }
-        
-        @keyframes rotate-gradient {
-            from { transform: translate(-50%, -50%) rotate(0deg); }
-            to { transform: translate(-50%, -50%) rotate(360deg); }
-        }
-        /* ✨ 이 코드로 교체해주세요 */
-
-        /* --- 'NEW' 뱃지 효과 (위치 수정됨) --- */
-        .new-badge {
-          position: absolute;
-          top: 12px;
-          left: 12px; /* right -> left 로 변경 */
-          background-color: #4b5563;
-          color: #ffffff;
-          font-size: 0.75rem;
-          font-weight: 700;
-          padding: 2px 8px;
-          border-radius: 9999px;
-          box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-          transform: rotate(-10deg); /* 반대 방향으로 기울임 */
-          animation: bounce-badge 2s ease-in-out infinite;
-          z-index: 10;
-        }
-        .dark .new-badge {
-          background-color: #d1d5db;
-          color: #1f2937;
-        }
-        
-        @keyframes bounce-badge {
-          0%, 100% { transform: rotate(-10deg) translateY(0); }
-          50% { transform: rotate(-10deg) translateY(-4px); }
-        }
-     
     </style>
 </head>
 <body class="bg-gray-100 dark:bg-gray-900 transition-colors duration-300">
@@ -437,14 +362,6 @@
             }
 
             function generateCardView(item, isAdminUser) {
-                // ✨ 여기에 아래 코드를 추가하세요!
-                let newBadgeHtml = '';
-                if (item.createdAt && item.createdAt.toDate) {
-                    if (isWithinBusinessDays(item.createdAt.toDate(), 7)) {
-                        newBadgeHtml = '<div class="new-badge">NEW</div>';
-                    }
-                }
-                
                 const categoryTagsHtml = (item.카테고리 || []).map(cat => `<span class="text-xs font-semibold text-blue-800 bg-blue-100 dark:text-gray-200 dark:bg-gray-600 px-2 py-1 rounded-full">${cat}</span>`).join('');
                 
                 const adminButtonsHtml = isAdminUser ? `
@@ -466,10 +383,21 @@
                 infoHtml += createRow('연락처', item.연락처, item.연락처);
                 infoHtml += createRow('판매 대행사', item['판매 대행사'], item['판매 대행사']);
                 const introButtonHtml = item['소개서URL'] ? `<a href="${item['소개서URL']}" target="_blank" rel="noopener noreferrer" class="w-full text-center block bg-blue-600 text-white font-semibold text-sm py-2 px-4 rounded-lg hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 transition-colors">소개서 다운로드</a>` : `<button class="w-full text-center block bg-gray-300 dark:bg-gray-700 text-gray-500 dark:text-gray-400 font-semibold text-sm py-2 px-4 rounded-lg cursor-not-allowed" disabled>소개서 없음</button>`;
-                
+
+                // ✨ 여기에 아래 코드를 붙여넣으세요
+                let newTagHtml = '';
+                if (item.createdAt && item.createdAt.toDate) {
+                    if (isWithinBusinessDays(item.createdAt.toDate(), 7)) {
+                        newTagHtml = '<span class="ml-2 text-sm font-bold text-green-500 animate-pulse">[신규]</span>';
+                    }
+                }
+
                 // ✨ 최종 `return` 문 (기존 return 문을 지우고 이걸로 교체!)
-                return `${newBadgeHtml}<div class="flex justify-between items-start gap-2 mb-4">
-                            <h2 class="text-xl font-bold text-gray-800 dark:text-gray-100 break-words" title="${item.매체명 || ''}">${item.매체명 || ''}</h2>
+                return `<div class="flex justify-between items-start gap-2 mb-4">
+                            <div class="flex items-center">
+                                <h2 class="text-xl font-bold text-gray-800 dark:text-gray-100 break-words" title="${item.매체명 || ''}">${item.매체명 || ''}</h2>
+                                ${newTagHtml}
+                            </div>
                             ${adminButtonsHtml}
                         </div>
                         <div class="flex-grow">
@@ -493,14 +421,8 @@
                 data.forEach(item => {
                     const card = document.createElement('div');
                     card.id = `card-${item.id}`;
-                    card.className = 'relative bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 flex flex-col transition-transform transform hover:-translate-y-1 transition-colors duration-300';
-                    
-                    if (item.createdAt && item.createdAt.toDate) {
-                       if (isWithinBusinessDays(item.createdAt.toDate(), 7)) {
-                            card.classList.add('card-gradient-border');
-                        }
-                    }                    
-                    
+                    card.className = 'bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 flex flex-col transition-transform transform hover:-translate-y-1 transition-colors duration-300';
+                               
                     card.innerHTML = generateCardView(item, isAdmin);
                     mediaList.appendChild(card);
                 });
@@ -1077,6 +999,7 @@
     </script>
 </body>
 </html>
+
 
 
 
