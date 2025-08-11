@@ -382,9 +382,20 @@
                 infoHtml += createRow('연락처', item.연락처, item.연락처);
                 infoHtml += createRow('판매 대행사', item['판매 대행사'], item['판매 대행사']);
                 const introButtonHtml = item['소개서URL'] ? `<a href="${item['소개서URL']}" target="_blank" rel="noopener noreferrer" class="w-full text-center block bg-blue-600 text-white font-semibold text-sm py-2 px-4 rounded-lg hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 transition-colors">소개서 다운로드</a>` : `<button class="w-full text-center block bg-gray-300 dark:bg-gray-700 text-gray-500 dark:text-gray-400 font-semibold text-sm py-2 px-4 rounded-lg cursor-not-allowed" disabled>소개서 없음</button>`;
+               
+                let newTagHtml = '';
+                if (item.createdAt && item.createdAt.toDate) {
+                    if (isWithinBusinessDays(item.createdAt.toDate(), 7)) {
+                        newTagHtml = '<span class="ml-2 text-sm font-bold text-green-500 animate-pulse">[신규]</span>';
+                    }
+                }   
                 
+                // ✨ 최종 `return` 문 (기존 return 문을 지우고 이걸로 교체!)
                 return `<div class="flex justify-between items-start gap-2 mb-4">
-                            <h2 class="text-xl font-bold text-gray-800 dark:text-gray-100 break-words" title="${item.매체명 || ''}">${item.매체명 || ''}</h2>
+                            <div class="flex items-center">
+                                <h2 class="text-xl font-bold text-gray-800 dark:text-gray-100 break-words" title="${item.매체명 || ''}">${item.매체명 || ''}</h2>
+                                ${newTagHtml}
+                            </div>
                             ${adminButtonsHtml}
                         </div>
                         <div class="flex-grow">
@@ -493,6 +504,30 @@
                 try { success = document.execCommand('copy'); } catch (err) { success = false; }
                 document.body.removeChild(textArea);
                 return success;
+            }
+            // ✨ 여기에 새 함수를 붙여넣으세요
+            function isWithinBusinessDays(creationDate, businessDayLimit) {
+                if (!creationDate || !(creationDate instanceof Date)) return false;
+            
+                const today = new Date();
+                today.setHours(23, 59, 59, 999);
+            
+                if (creationDate > today) return false;
+            
+                let businessDaysPassed = 0;
+                let currentDate = new Date(creationDate);
+            
+                while (currentDate <= today) {
+                    const day = currentDate.getDay(); // 0 = Sunday, 6 = Saturday
+                    if (day !== 0 && day !== 6) {
+                        businessDaysPassed++;
+                    }
+                    if (businessDaysPassed > businessDayLimit) {
+                        return false;
+                    }
+                    currentDate.setDate(currentDate.getDate() + 1);
+                }
+                return true;
             }
 
             // ===== 기능 2 추가 시작 =====
@@ -869,6 +904,7 @@
                     }
                     try {
                         if (isNew) {
+                            updatedItemData.createdAt = new Date(); // 👈 이 줄을 추가해주세요!
                             await addDoc(mediaCollectionRef, updatedItemData);
                             cardElement.remove();
                         } else {
@@ -942,6 +978,7 @@
     </script>
 </body>
 </html>
+
 
 
 
