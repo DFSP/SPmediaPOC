@@ -77,6 +77,26 @@
             from { transform: translateX(0); }
             to { transform: translateX(var(--scroll-width)); }
         }
+        
+        .glowing-border {
+          --glow-color: #10b981; /* 빛나는 색상 (에메랄드색) */
+          box-shadow: 0 0 5px var(--glow-color);
+          border: 1px solid var(--glow-color);
+          animation: pulse-glow 2s infinite ease-in-out;
+        }
+        .dark .glowing-border {
+          --glow-color: #34d399; /* 다크모드에서는 조금 더 밝은 색 */
+        }
+        
+        @keyframes pulse-glow {
+          0%, 100% {
+            box-shadow: 0 0 5px var(--glow-color);
+          }
+          50% {
+            box-shadow: 0 0 15px 3px var(--glow-color);
+          }
+        }
+        
     </style>
 </head>
 <body class="bg-gray-100 dark:bg-gray-900 transition-colors duration-300">
@@ -382,20 +402,10 @@
                 infoHtml += createRow('연락처', item.연락처, item.연락처);
                 infoHtml += createRow('판매 대행사', item['판매 대행사'], item['판매 대행사']);
                 const introButtonHtml = item['소개서URL'] ? `<a href="${item['소개서URL']}" target="_blank" rel="noopener noreferrer" class="w-full text-center block bg-blue-600 text-white font-semibold text-sm py-2 px-4 rounded-lg hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 transition-colors">소개서 다운로드</a>` : `<button class="w-full text-center block bg-gray-300 dark:bg-gray-700 text-gray-500 dark:text-gray-400 font-semibold text-sm py-2 px-4 rounded-lg cursor-not-allowed" disabled>소개서 없음</button>`;
-               
-                let newTagHtml = '';
-                if (item.createdAt && item.createdAt.toDate) {
-                    if (isWithinBusinessDays(item.createdAt.toDate(), 7)) {
-                        newTagHtml = '<span class="ml-2 text-sm font-bold text-green-500 animate-pulse">[신규]</span>';
-                    }
-                }   
                 
                 // ✨ 최종 `return` 문 (기존 return 문을 지우고 이걸로 교체!)
                 return `<div class="flex justify-between items-start gap-2 mb-4">
-                            <div class="flex items-center">
-                                <h2 class="text-xl font-bold text-gray-800 dark:text-gray-100 break-words" title="${item.매체명 || ''}">${item.매체명 || ''}</h2>
-                                ${newTagHtml}
-                            </div>
+                            <h2 class="text-xl font-bold text-gray-800 dark:text-gray-100 break-words" title="${item.매체명 || ''}">${item.매체명 || ''}</h2>
                             ${adminButtonsHtml}
                         </div>
                         <div class="flex-grow">
@@ -420,6 +430,13 @@
                     const card = document.createElement('div');
                     card.id = `card-${item.id}`;
                     card.className = 'bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 flex flex-col transition-transform transform hover:-translate-y-1 transition-colors duration-300';
+                    
+                    if (item.createdAt && item.createdAt.toDate) {
+                        if (isWithinBusinessDays(item.createdAt.toDate(), 7)) {
+                            card.classList.add('glowing-border');
+                        }
+                    }                    
+                    
                     card.innerHTML = generateCardView(item, isAdmin);
                     mediaList.appendChild(card);
                 });
@@ -597,7 +614,16 @@
                             mediaData = mediaData.filter(item => item.id !== change.doc.id);
                         }
                     });
-                    mediaData.sort((a, b) => (a.매체명 || '').localeCompare(b.매체명 || '', 'ko'));
+                    mediaData.sort((a, b) => {
+                        const isANew = a.createdAt && a.createdAt.toDate && isWithinBusinessDays(a.createdAt.toDate(), 7);
+                        const isBNew = b.createdAt && b.createdAt.toDate && isWithinBusinessDays(b.createdAt.toDate(), 7);
+                    
+                        if (isANew && !isBNew) return -1; // a가 신규면 위로
+                        if (!isANew && isBNew) return 1;  // b가 신규면 위로
+                    
+                        // 둘 다 신규이거나 둘 다 아닐 경우, 이름순으로 정렬
+                        return (a.매체명 || '').localeCompare(b.매체명 || '', 'ko');
+                    });
                     filterAndRender(); 
                     populateCategories();
                 }, (error) => {
@@ -758,7 +784,16 @@
 
                             getDocs(mediaCollectionRef).then(querySnapshot => {
                                 let initialData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                                initialData.sort((a, b) => (a.매체명 || '').localeCompare(b.매체명 || '', 'ko'));
+                                initialData.sort((a, b) => {
+                                    const isANew = a.createdAt && a.createdAt.toDate && isWithinBusinessDays(a.createdAt.toDate(), 7);
+                                    const isBNew = b.createdAt && b.createdAt.toDate && isWithinBusinessDays(b.createdAt.toDate(), 7);
+                                
+                                    if (isANew && !isBNew) return -1; // a가 신규면 위로
+                                    if (!isANew && isBNew) return 1;  // b가 신규면 위로
+                                
+                                    // 둘 다 신규이거나 둘 다 아닐 경우, 이름순으로 정렬
+                                    return (a.매체명 || '').localeCompare(b.매체명 || '', 'ko');
+                                });
                                 initializeUIWithData(initialData);
                                 initializeFirestoreListener();
                                 initializePatchNotesListener(isAdmin);
@@ -978,6 +1013,7 @@
     </script>
 </body>
 </html>
+
 
 
 
