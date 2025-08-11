@@ -77,8 +77,9 @@
             from { transform: translateX(0); }
             to { transform: translateX(var(--scroll-width)); }
         }
+        /* ✨ 여기에 최종 수정된 코드를 붙여넣으세요 */
         
-        /* ✨ 여기에 새 코드를 붙여넣으세요 */
+        /* --- 순환 테두리 효과 --- */
         .card-gradient-border {
             position: relative;
             overflow: hidden;
@@ -92,12 +93,14 @@
             width: 200%;
             height: 200%;
             z-index: -2;
+            /* 라이트 모드: 반투명 녹색 */
             background: conic-gradient(
-                transparent 20%, #d1d5db, #f9fafb, #d1d5db, transparent 80%
+                transparent 20%, rgba(22, 163, 74, 0.7), rgba(34, 197, 94, 0.9), rgba(22, 163, 74, 0.7), transparent 80%
             );
             transform-origin: center center;
             animation: rotate-gradient 4s linear infinite;
         }
+        /* 다크 모드: 모노톤 */
         .dark .card-gradient-border::before {
              background: conic-gradient(
                 transparent 20%, #6b7280, #d1d5db, #9ca3af, #6b7280, transparent 80%
@@ -111,41 +114,43 @@
             right: 2px;
             bottom: 2px;
             z-index: -1;
-            border-radius: 0.7rem; /* 카드 테두리 굵기보다 약간 작게 */
-            background-color: #ffffff; /* 라이트 모드 기본 배경 */
+            border-radius: 0.7rem;
+            background-color: #ffffff;
         }
         .dark .card-gradient-border::after {
-            background-color: #1f2937; /* 다크 모드 배경 */
+            background-color: #1f2937;
         }
         
         @keyframes rotate-gradient {
             from { transform: translate(-50%, -50%) rotate(0deg); }
             to { transform: translate(-50%, -50%) rotate(360deg); }
         }
+        /* ✨ 이 코드로 교체해주세요 */
 
-        /* ✨ 여기에 'NEW' 뱃지 코드를 붙여넣으세요 */
+        /* --- 'NEW' 뱃지 효과 (위치 수정됨) --- */
         .new-badge {
           position: absolute;
-          top: -10px;
-          right: 16px;
-          background-color: #4b5563; /* 어두운 회색 */
+          top: 12px;
+          left: 12px; /* right -> left 로 변경 */
+          background-color: #4b5563;
           color: #ffffff;
-          font-size: 0.75rem; /* 12px */
+          font-size: 0.75rem;
           font-weight: 700;
           padding: 2px 8px;
           border-radius: 9999px;
           box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-          transform: rotate(10deg);
+          transform: rotate(-10deg); /* 반대 방향으로 기울임 */
           animation: bounce-badge 2s ease-in-out infinite;
+          z-index: 10;
         }
         .dark .new-badge {
-          background-color: #d1d5db; /* 밝은 회색 */
+          background-color: #d1d5db;
           color: #1f2937;
         }
         
         @keyframes bounce-badge {
-          0%, 100% { transform: rotate(10deg) translateY(0); }
-          50% { transform: rotate(10deg) translateY(-4px); }
+          0%, 100% { transform: rotate(-10deg) translateY(0); }
+          50% { transform: rotate(-10deg) translateY(-4px); }
         }
      
     </style>
@@ -1072,6 +1077,7 @@
     </script>
 </body>
 </html>
+
 
 
 
