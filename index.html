@@ -503,7 +503,14 @@
                 currentFilteredData = filteredData;
                 renderMedia(filteredData);
             }
-
+            
+            function initializeUIWithData(data) {
+                mediaData = data;
+                populateCategories();
+                updateSearchPlaceholder();
+                filterAndRender();
+            }
+            
             function processExcelData(rawData) {
                 return rawData.map(row => {
                     const safeRow = (typeof row === 'object' && row !== null) ? row : {};
@@ -1038,6 +1045,7 @@
     </script>
 </body>
 </html>
+
 
 
 
