@@ -6,6 +6,8 @@
     <title>[디지털퍼스트] 미디어 POC 리스트</title>
 
     <script src="https://cdn.tailwindcss.com"></script>
+
+    <script src="https://unpkg.com/hangul-js"></script> 
     
     <script>
       tailwind.config = {
@@ -166,17 +168,20 @@
                 </div>
             </div>
             <main>
-                <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md mb-6 transition-colors duration-300">
-                    <div class="mb-4">
-                        <label for="search-box" class="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-2">매체명/담당자 검색</label>
-                        <input type="text" id="search-box" class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition" placeholder="데이터베이스 연결 중...">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-2">카테고리 선택 (중복 가능)</label>
-                        <div id="category-tags-container" class="flex flex-wrap gap-2">
+                        <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md mb-6 transition-colors duration-300">
+                            <div class="mb-4">
+                                <label for="search-box" class="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-2">매체명/담당자 검색</label>
+                                <input type="text" id="search-box" class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition" placeholder="데이터베이스 연결 중...">
+                                
+                                <p id="search-suggestion" class="hidden mt-2 text-sm text-gray-500 dark:text-gray-400"></p>
+            
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-2">카테고리 선택 (중복 가능)</label>
+                                <div id="category-tags-container" class="flex flex-wrap gap-2">
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                </div>
 
                 <div id="add-new-button-wrapper" class="mb-6 text-right hidden space-x-2">
                     <button id="add-new-card-button" class="bg-blue-600 text-white font-bold text-sm py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors shadow-md inline-flex items-center">
@@ -287,7 +292,7 @@
             const patchContent = document.getElementById('patch-content');
             const patchDateInput = document.getElementById('patch-date-input');
             const patchContentInput = document.getElementById('patch-content-input');
-            
+            const searchSuggestion = document.getElementById('search-suggestion')
             // ===== 기능 1 추가 시작 =====
             const themeToggleButton = document.getElementById('theme-toggle-button');
             const themeIconLight = document.getElementById('theme-icon-light');
@@ -430,16 +435,57 @@
                 noResults.classList.toggle('hidden', hasContentToShow);
                 copyAllContainer.classList.toggle('hidden', !hasContentToShow || !!newCard);
             }
+                    
+            // ✅ 기존의 filterAndRender 함수를 아래의 최종 완성 버전으로 통째로 교체하세요.
             
             function filterAndRender() {
-                const searchTerms = searchBox.value
-                    .split(',')
-                    .map(term => term.trim().toLowerCase().replace(/\s/g, ''))
-                    .filter(term => term.length > 0);
+                // 1. 쉼표(,)를 기준으로 검색어들을 나눔
+                const rawTerms = searchBox.value.trim().split(',');
+                const processedTerms = []; // 최종 검색에 사용될 단어 목록
+                let typoFound = false;
             
+                // 2. 각 단어별로 한/영 변환 시도
+                rawTerms.forEach(term => {
+                    const singleTerm = term.trim();
+                    if (!singleTerm) return;
+            
+                    // ▼▼▼ 이 부분이 쉼표 버그를 수정한 이전 코드와 달라진 핵심 로직입니다. ▼▼▼
+            
+                    // 3. 정규식을 사용해 단어 속 '영어 덩어리'만 찾아 변환
+                    const converted = singleTerm.replace(/[a-zA-Z]+/g, (match) => {
+                        if (typeof Hangul === 'undefined') return match; // 라이브러리 로딩 전이면 원본 유지
+                        return Hangul.assemble(Hangul.disassemble(match));
+                    });
+            
+                    // 4. 변환된 값이 있다면 '오타'로 판단하고, 최종 검색어 목록에 추가
+                    if (converted && converted !== singleTerm) {
+                        processedTerms.push(converted);
+                        typoFound = true;
+                    } else {
+                        processedTerms.push(singleTerm);
+                    }
+                    
+                    // ▲▲▲ 여기까지가 핵심 수정 부분입니다. ▲▲▲
+                });
+            
+                // 5. 오타가 발견되면, 전체 변환 결과를 메시지로 보여줌
+                if (typoFound) {
+                    const suggestionText = processedTerms.join(', ');
+                    searchSuggestion.textContent = `혹시 '${suggestionText}'을(를) 입력하셨나요?`;
+                    searchSuggestion.classList.remove('hidden');
+                } else {
+                    searchSuggestion.classList.add('hidden');
+                    searchSuggestion.textContent = '';
+                }
+                
+                // 6. 최종 처리된 단어 목록으로 검색 수행
+                const searchTerms = processedTerms
+                    .map(term => term.toLowerCase().replace(/\s/g, ''))
+                    .filter(term => term.length > 0);
+                
                 const selectedCategoryNodes = categoryTagsContainer.querySelectorAll('.bg-blue-600, .dark\\:bg-blue-500');
                 const selectedCategories = Array.from(selectedCategoryNodes).map(node => node.dataset.category);
-            
+                
                 const filteredData = mediaData.filter(item => {
                     const matchesSearch = searchTerms.length === 0 ? true : searchTerms.some(term => {
                         const mediaName = (item.매체명 || '').toLowerCase().replace(/\s/g, '');
@@ -448,21 +494,14 @@
                         
                         return mediaName.includes(term) || pocName.includes(term) || agencyName.includes(term);
                     });
-            
+                
                     const matchesCategory = selectedCategories.length === 0 ? true : selectedCategories.some(cat => (item.카테고리 || []).includes(cat));
                     
                     return matchesSearch && matchesCategory;
                 });
-            
+                
                 currentFilteredData = filteredData;
                 renderMedia(filteredData);
-            }
-
-            function initializeUIWithData(data) {
-                mediaData = data;
-                populateCategories();
-                updateSearchPlaceholder();
-                filterAndRender();
             }
 
             function processExcelData(rawData) {
@@ -999,6 +1038,7 @@
     </script>
 </body>
 </html>
+
 
 
 
