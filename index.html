@@ -436,40 +436,36 @@
                 copyAllContainer.classList.toggle('hidden', !hasContentToShow || !!newCard);
             }
                     
-            // ✅ 기존의 filterAndRender 함수를 아래의 최종 완성 버전으로 통째로 교체하세요.
-            
+           // ✅ 디버깅용 코드가 추가된 아래 함수로 통째로 교체해 주세요.
+
             function filterAndRender() {
-                // 1. 쉼표(,)를 기준으로 검색어들을 나눔
+                console.log("✅ 1. filterAndRender 함수 실행됨!"); // 스피커 1: 함수가 잘 실행되는지 확인
+            
                 const rawTerms = searchBox.value.trim().split(',');
-                const processedTerms = []; // 최종 검색에 사용될 단어 목록
+                const processedTerms = [];
                 let typoFound = false;
             
-                // 2. 각 단어별로 한/영 변환 시도
                 rawTerms.forEach(term => {
                     const singleTerm = term.trim();
                     if (!singleTerm) return;
             
-                    // ▼▼▼ 이 부분이 쉼표 버그를 수정한 이전 코드와 달라진 핵심 로직입니다. ▼▼▼
-            
-                    // 3. 정규식을 사용해 단어 속 '영어 덩어리'만 찾아 변환
                     const converted = singleTerm.replace(/[a-zA-Z]+/g, (match) => {
-                        if (typeof Hangul === 'undefined') return match; // 라이브러리 로딩 전이면 원본 유지
+                        if (typeof Hangul === 'undefined') return match;
                         return Hangul.assemble(Hangul.disassemble(match));
                     });
+                    
+                    console.log("🔄 2. 단어:", singleTerm, "-> 변환 시도:", converted); // 스피커 2: 각 단어가 어떻게 변환되는지 확인
             
-                    // 4. 변환된 값이 있다면 '오타'로 판단하고, 최종 검색어 목록에 추가
                     if (converted && converted !== singleTerm) {
                         processedTerms.push(converted);
                         typoFound = true;
                     } else {
                         processedTerms.push(singleTerm);
                     }
-                    
-                    // ▲▲▲ 여기까지가 핵심 수정 부분입니다. ▲▲▲
                 });
             
-                // 5. 오타가 발견되면, 전체 변환 결과를 메시지로 보여줌
                 if (typoFound) {
+                    console.log("🎯 3. 오타 발견!", processedTerms); // 스피커 3: 오타를 최종적으로 감지했는지 확인
                     const suggestionText = processedTerms.join(', ');
                     searchSuggestion.textContent = `혹시 '${suggestionText}'을(를) 입력하셨나요?`;
                     searchSuggestion.classList.remove('hidden');
@@ -478,28 +474,23 @@
                     searchSuggestion.textContent = '';
                 }
                 
-                // 6. 최종 처리된 단어 목록으로 검색 수행
                 const searchTerms = processedTerms
                     .map(term => term.toLowerCase().replace(/\s/g, ''))
                     .filter(term => term.length > 0);
                 
+                // (이하 검색 로직은 동일)
                 const selectedCategoryNodes = categoryTagsContainer.querySelectorAll('.bg-blue-600, .dark\\:bg-blue-500');
                 const selectedCategories = Array.from(selectedCategoryNodes).map(node => node.dataset.category);
-                
                 const filteredData = mediaData.filter(item => {
                     const matchesSearch = searchTerms.length === 0 ? true : searchTerms.some(term => {
                         const mediaName = (item.매체명 || '').toLowerCase().replace(/\s/g, '');
                         const pocName = (item.담당자 || '').toLowerCase().replace(/\s/g, '');
                         const agencyName = (item['판매 대행사'] || '').toLowerCase().replace(/\s/g, '');
-                        
                         return mediaName.includes(term) || pocName.includes(term) || agencyName.includes(term);
                     });
-                
                     const matchesCategory = selectedCategories.length === 0 ? true : selectedCategories.some(cat => (item.카테고리 || []).includes(cat));
-                    
                     return matchesSearch && matchesCategory;
                 });
-                
                 currentFilteredData = filteredData;
                 renderMedia(filteredData);
             }
@@ -1045,6 +1036,7 @@
     </script>
 </body>
 </html>
+
 
 
 
