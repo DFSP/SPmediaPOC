@@ -304,7 +304,16 @@
             // ===== 기능 2 추가 종료 =====
             
             // --- 함수 선언 ---
-            
+            function engToKor(text) {
+                const keyMap = {
+                    'q': 'ㅂ', 'w': 'ㅈ', 'e': 'ㄷ', 'r': 'ㄱ', 't': 'ㅅ', 'y': 'ㅛ', 'u': 'ㅕ', 'i': 'ㅑ', 'o': 'ㅐ', 'p': 'ㅔ',
+                    'a': 'ㅁ', 's': 'ㄴ', 'd': 'ㅇ', 'f': 'ㄹ', 'g': 'ㅎ', 'h': 'ㅗ', 'j': 'ㅓ', 'k': 'ㅏ', 'l': 'ㅣ',
+                    'z': 'ㅋ', 'x': 'ㅌ', 'c': 'ㅊ', 'v': 'ㅍ', 'b': 'ㅠ', 'n': 'ㅜ', 'm': 'ㅡ',
+                    'Q': 'ㅃ', 'W': 'ㅉ', 'E': 'ㄸ', 'R': 'ㄲ', 'T': 'ㅆ', 'O': 'ㅒ', 'P': 'ㅖ'
+                };
+                return text.split('').map(char => keyMap[char] || char);
+            }
+
             function initializeScrollingBanners() {
                 const banners = document.querySelectorAll('.scrolling-banner-container');
                 
@@ -436,11 +445,9 @@
                 copyAllContainer.classList.toggle('hidden', !hasContentToShow || !!newCard);
             }
                     
-           // ✅ 디버깅용 코드가 추가된 아래 함수로 통째로 교체해 주세요.
-
-            function filterAndRender() {
-                console.log("✅ 1. filterAndRender 함수 실행됨!"); // 스피커 1: 함수가 잘 실행되는지 확인
+            // ✅ 2단계: 기존 filterAndRender 함수를 아래의 최종 코드로 교체하세요.
             
+            function filterAndRender() {
                 const rawTerms = searchBox.value.trim().split(',');
                 const processedTerms = [];
                 let typoFound = false;
@@ -449,12 +456,15 @@
                     const singleTerm = term.trim();
                     if (!singleTerm) return;
             
+                    // ▼▼▼ 핵심 수정 부분: 잘못된 드라이버(disassemble)를 새 변환 도구(engToKor)로 교체 ▼▼▼
                     const converted = singleTerm.replace(/[a-zA-Z]+/g, (match) => {
                         if (typeof Hangul === 'undefined') return match;
-                        return Hangul.assemble(Hangul.disassemble(match));
+                        
+                        // engToKor로 영어 단어를 한글 부품으로 바꾼 뒤, Hangul.assemble로 조립합니다.
+                        const jamoArray = engToKor(match);
+                        return Hangul.assemble(jamoArray);
                     });
-                    
-                    console.log("🔄 2. 단어:", singleTerm, "-> 변환 시도:", converted); // 스피커 2: 각 단어가 어떻게 변환되는지 확인
+                    // ▲▲▲ 여기까지가 수정된 부분입니다. ▲▲▲
             
                     if (converted && converted !== singleTerm) {
                         processedTerms.push(converted);
@@ -465,7 +475,6 @@
                 });
             
                 if (typoFound) {
-                    console.log("🎯 3. 오타 발견!", processedTerms); // 스피커 3: 오타를 최종적으로 감지했는지 확인
                     const suggestionText = processedTerms.join(', ');
                     searchSuggestion.textContent = `혹시 '${suggestionText}'을(를) 입력하셨나요?`;
                     searchSuggestion.classList.remove('hidden');
@@ -474,11 +483,10 @@
                     searchSuggestion.textContent = '';
                 }
                 
+                // (이하 검색 로직은 동일)
                 const searchTerms = processedTerms
                     .map(term => term.toLowerCase().replace(/\s/g, ''))
                     .filter(term => term.length > 0);
-                
-                // (이하 검색 로직은 동일)
                 const selectedCategoryNodes = categoryTagsContainer.querySelectorAll('.bg-blue-600, .dark\\:bg-blue-500');
                 const selectedCategories = Array.from(selectedCategoryNodes).map(node => node.dataset.category);
                 const filteredData = mediaData.filter(item => {
@@ -493,8 +501,7 @@
                 });
                 currentFilteredData = filteredData;
                 renderMedia(filteredData);
-            }
-            
+            }          
             function initializeUIWithData(data) {
                 mediaData = data;
                 populateCategories();
@@ -1036,6 +1043,7 @@
     </script>
 </body>
 </html>
+
 
 
 
