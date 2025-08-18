@@ -447,7 +447,7 @@
                     
             // ✅ 2단계: 기존 filterAndRender 함수를 아래의 최종 코드로 교체하세요.
             
-            function filterAndRender() {
+           function filterAndRender() {
                 const rawTerms = searchBox.value.trim().split(',');
                 const processedTerms = [];
                 let typoFound = false;
@@ -456,28 +456,39 @@
                     const singleTerm = term.trim();
                     if (!singleTerm) return;
             
-                    // ▼▼▼ 핵심 수정 부분: 잘못된 드라이버(disassemble)를 새 변환 도구(engToKor)로 교체 ▼▼▼
+                    // ▼▼▼ 바로 이 부분이 핵심 수정 포인트입니다! ▼▼▼
+            
+                    // 1. 어떤 경우든 원래 입력한 값을 먼저 후보에 추가합니다.
+                    processedTerms.push(singleTerm);
+            
+                    // 2. 한/영 변환을 시도합니다.
                     const converted = singleTerm.replace(/[a-zA-Z]+/g, (match) => {
                         if (typeof Hangul === 'undefined') return match;
-                        
-                        // engToKor로 영어 단어를 한글 부품으로 바꾼 뒤, Hangul.assemble로 조립합니다.
                         const jamoArray = engToKor(match);
                         return Hangul.assemble(jamoArray);
                     });
-                    // ▲▲▲ 여기까지가 수정된 부분입니다. ▲▲▲
             
+                    // 3. 만약 변환된 결과가 원본과 다르다면, 변환된 값도 후보에 추가합니다.
                     if (converted && converted !== singleTerm) {
                         processedTerms.push(converted);
                         typoFound = true;
-                    } else {
-                        processedTerms.push(singleTerm);
                     }
+                    
+                    // ▲▲▲ 여기까지가 수정된 부분입니다 ▲▲▲
                 });
             
                 if (typoFound) {
-                    const suggestionText = processedTerms.join(', ');
-                    searchSuggestion.textContent = `혹시 '${suggestionText}'을(를) 입력하셨나요?`;
-                    searchSuggestion.classList.remove('hidden');
+                    // 변환된 검색어 중, 완성된 한글이 포함된 것만 필터링
+                    const suggestionCandidates = processedTerms.filter(t => /[가-힣]/.test(t));
+                
+                    if (suggestionCandidates.length > 0) {
+                        const suggestionText = suggestionCandidates.join(', ');
+                        searchSuggestion.textContent = `혹시 '${suggestionText}'을(를) 입력하셨나요?`;
+                        searchSuggestion.classList.remove('hidden');
+                    } else {
+                        // 'SOOP' -> 'Sㅐㅐㅔ' 처럼 완성된 한글이 없으면 추천 안함
+                        searchSuggestion.classList.add('hidden');
+                    }
                 } else {
                     searchSuggestion.classList.add('hidden');
                     searchSuggestion.textContent = '';
@@ -501,7 +512,7 @@
                 });
                 currentFilteredData = filteredData;
                 renderMedia(filteredData);
-            }          
+            }         
             function initializeUIWithData(data) {
                 mediaData = data;
                 populateCategories();
@@ -898,7 +909,21 @@
                         const worksheet = workbook.Sheets[sheetName];
                         const jsonData = XLSX.utils.sheet_to_json(worksheet);
                         const processedData = processExcelData(jsonData);
-                        uploadDataToFirebase(processedData);
+            
+                        // ▼▼▼ 바로 이 부분이 추가된 안전장치입니다! ▼▼▼
+                        
+                        // 1. 사용자에게 위험한 작업임을 알리고 확인을 받습니다.
+                        if (confirm(`정말로 기존의 모든 데이터를 삭제하고 ${processedData.length}개의 새 데이터로 교체하시겠습니까? 이 작업은 되돌릴 수 없습니다.`)) {
+                            // 2. 사용자가 '확인'을 눌렀을 때만 업로드를 실행합니다.
+                            uploadDataToFirebase(processedData);
+                        } else {
+                            // 3. 사용자가 '취소'를 누르면 작업을 중단하고 메시지를 보여줍니다.
+                            showToast("업로드가 취소되었습니다.", "success");
+                            e.target.value = ''; // 파일 선택을 초기화합니다.
+                            fileNameSpan.textContent = '';
+                        }
+                        // ▲▲▲ 여기까지가 수정된 부분입니다. ▲▲▲
+            
                     } catch (error) {
                         console.error("파일 처리 중 오류 발생:", error);
                         showToast("파일을 처리하는 중 오류가 발생했습니다. 파일 형식을 확인해주세요.", "error");
@@ -1043,6 +1068,7 @@
     </script>
 </body>
 </html>
+
 
 
 
