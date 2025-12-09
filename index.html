@@ -96,6 +96,11 @@
     
     <canvas id="snow-canvas"></canvas>
     
+    
+    <div id="login-screen" class="flex min-h-screen items-center justify-center">
+        <div class="w-full max-w-md rounded-lg bg-white p-8 text-center shadow-xl dark:bg-gray-800">
+
+
     <div id="login-screen" class="flex min-h-screen items-center justify-center">
         <div class="w-full max-w-md rounded-lg bg-white p-8 text-center shadow-xl dark:bg-gray-800">
             <h1 class="mb-4 text-2xl font-bold text-gray-800 dark:text-white">[디지털퍼스트] 미디어 POC 리스트</h1>
@@ -487,13 +492,17 @@
                 infoHtml += createRow('판매 대행사', item['판매 대행사'], item['판매 대행사']);
                 const introButtonHtml = item['소개서URL'] ? `<a href="${item['소개서URL']}" target="_blank" rel="noopener noreferrer" class="w-full text-center block bg-blue-600 text-white font-semibold text-sm py-2 px-4 rounded-lg hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 transition-colors">소개서 다운로드</a>` : `<button class="w-full text-center block bg-gray-300 dark:bg-gray-700 text-gray-500 dark:text-gray-400 font-semibold text-sm py-2 px-4 rounded-lg cursor-not-allowed" disabled>소개서 없음</button>`;
 
-                // ✨ 여기에 아래 코드를 붙여넣으세요
+		// ✨ [수정할 부분 시작] ✨
                 let newTagHtml = '';
-                if (item.createdAt && item.createdAt.toDate) {
-                    if (isWithinBusinessDays(item.createdAt.toDate(), 7)) {
-                        newTagHtml = '<span class="ml-2 text-sm font-bold text-green-500 animate-pulse">[신규]</span>';
-                    }
+                // 1. 신규 여부 확인
+                if (item.createdAt && item.createdAt.toDate && isWithinBusinessDays(item.createdAt.toDate(), 7)) {
+                    newTagHtml = '<span class="ml-2 text-sm font-bold text-green-500 animate-pulse">[신규]</span>';
+                } 
+                // 2. 업데이트 여부 확인 (신규가 아닐 때만 체크)
+                else if (item.updatedAt && item.updatedAt.toDate && isWithinBusinessDays(item.updatedAt.toDate(), 7)) {
+                    newTagHtml = '<span class="ml-2 text-sm font-bold text-red-500 animate-pulse">[업데이트]</span>';
                 }
+                // ✨ [수정할 부분 끝] ✨
 
                 // ✨ 최종 `return` 문 (기존 return 문을 지우고 이걸로 교체!)
                 return `<div class="flex justify-between items-start gap-2 mb-4">
@@ -525,7 +534,7 @@
                     const card = document.createElement('div');
                     card.id = `card-${item.id}`;
                     card.className = 'bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 flex flex-col transition-transform transform hover:-translate-y-1 transition-colors duration-300';
-                                
+                               
                     card.innerHTML = generateCardView(item, isAdmin);
                     mediaList.appendChild(card);
                 });
@@ -601,7 +610,7 @@
                 });
                 currentFilteredData = filteredData;
                 renderMedia(filteredData);
-            }          
+            }         
             function initializeUIWithData(data) {
                 mediaData = data;
                 populateCategories();
@@ -744,18 +753,36 @@
                             mediaData = mediaData.filter(item => item.id !== change.doc.id);
                         }
                     });
+
+		// ✨ [수정할 부분 시작] 정렬 로직 변경 ✨
                     mediaData.sort((a, b) => {
+                        // 신규 여부 체크 (7영업일)
                         const isANew = a.createdAt && a.createdAt.toDate && isWithinBusinessDays(a.createdAt.toDate(), 7);
                         const isBNew = b.createdAt && b.createdAt.toDate && isWithinBusinessDays(b.createdAt.toDate(), 7);
-                    
-                        if (isANew && !isBNew) return -1; // a가 신규면 위로
-                        if (!isANew && isBNew) return 1;  // b가 신규면 위로
-                    
-                        // 둘 다 신규이거나 둘 다 아닐 경우, 이름순으로 정렬
+                        
+                        // 업데이트 여부 체크 (7영업일)
+                        const isAUpdated = a.updatedAt && a.updatedAt.toDate && isWithinBusinessDays(a.updatedAt.toDate(), 7);
+                        const isBUpdated = b.updatedAt && b.updatedAt.toDate && isWithinBusinessDays(b.updatedAt.toDate(), 7);
+
+                        // 1순위: [신규]가 최상단
+                        if (isANew && !isBNew) return -1;
+                        if (!isANew && isBNew) return 1;
+
+                        // 2순위: 둘 다 신규가 아니거나, 둘 다 신규라면 -> [업데이트]가 그 다음 상단
+                        // (단, 둘다 신규인 경우는 이름순으로 가기 위해 여기서 처리 안함, 신규가 아닌 그룹 내에서만 업데이트 비교)
+                        if (!isANew && !isBNew) {
+                            if (isAUpdated && !isBUpdated) return -1;
+                            if (!isAUpdated && isBUpdated) return 1;
+                        }
+
+                        // 3순위: 그 외는 매체명 가나다순 정렬
                         return (a.매체명 || '').localeCompare(b.매체명 || '', 'ko');
                     });
+                    // ✨ [수정할 부분 끝] ✨
+
                     filterAndRender(); 
                     populateCategories();
+
                 }, (error) => {
                     console.error("실시간 데이터 감지 오류: ", error);
                     showToast("데이터를 실시간으로 가져오는 데 실패했습니다.", "error");
@@ -1074,24 +1101,68 @@
                     if(item) cardElement.innerHTML = generateCardView(item, isAdmin);
                 } else if (action === 'cancel') {
                     if (isNew) { cardElement.remove(); } else { cardElement.innerHTML = generateCardView(item, isAdmin); }
-                } else if (action === 'save') {
+}
+		 else if (action === 'save') {
                     const form = cardElement.querySelector('form');
                     const formData = new FormData(form);
                     const updatedItemData = {};
+
+                    // 폼 데이터 수집
                     for (let [key, value] of formData.entries()) {
-                        if (key === '카테고리') { updatedItemData[key] = value.split(',').map(v => v.trim()).filter(Boolean); } else { updatedItemData[key] = value; }
+                        if (key === '카테고리') { 
+                            updatedItemData[key] = value.split(',').map(v => v.trim()).filter(Boolean); 
+                        } else { 
+                            updatedItemData[key] = value.trim(); // 공백 제거 후 저장
+                        }
                     }
+
                     try {
                         if (isNew) {
-                            updatedItemData.createdAt = new Date(); // 👈 이 줄을 추가해주세요!
+                            updatedItemData.createdAt = new Date();
                             await addDoc(mediaCollectionRef, updatedItemData);
                             cardElement.remove();
+                            await updateLastUpdatedTimestamp(); 
+                            showToast('성공적으로 저장되었습니다.', 'success');
                         } else {
                             if (!docRef) return;
+
+                            // ✨ [핵심 수정] 변경 사항 감지 로직 시작 ✨
+                            let isChanged = false;
+                            
+                            // 1. 텍스트 필드 비교
+                            const textFields = ['매체명', '담당자', '직책', '이메일', '팀메일', '연락처', '판매 대행사', '소개서URL'];
+                            for (const field of textFields) {
+                                const originalVal = (item[field] || '').trim();
+                                const newVal = (updatedItemData[field] || '');
+                                if (originalVal !== newVal) {
+                                    isChanged = true;
+                                    break;
+                                }
+                            }
+
+                            // 2. 카테고리(배열) 비교
+                            if (!isChanged) {
+                                const originalCats = (item.카테고리 || []).slice().sort().join(',');
+                                const newCats = (updatedItemData.카테고리 || []).slice().sort().join(',');
+                                if (originalCats !== newCats) {
+                                    isChanged = true;
+                                }
+                            }
+
+                            // 3. 변경 사항이 없으면 저장하지 않고 뷰 모드로 복귀
+                            if (!isChanged) {
+                                showToast('변경 사항이 없어 저장하지 않았습니다.');
+                                cardElement.innerHTML = generateCardView(item, isAdmin);
+                                return; // 함수 종료 (DB 업데이트 안 함)
+                            }
+
+                            // 4. 변경 사항이 있을 때만 업데이트 시간 기록 및 저장
+                            updatedItemData.updatedAt = new Date(); 
                             await updateDoc(docRef, updatedItemData);
+                            await updateLastUpdatedTimestamp();
+                            showToast('성공적으로 수정되었습니다.', 'success');
+                            // ✨ [핵심 수정] 변경 사항 감지 로직 끝 ✨
                         }
-                        await updateLastUpdatedTimestamp(); // ===== 기능 2 연동 =====
-                        showToast('성공적으로 저장되었습니다.', 'success');
                     } catch (error) {
                         console.error("저장 오류: ", error);
                         showToast("저장에 실패했습니다.", "error");
@@ -1157,3 +1228,4 @@
     </script>
 </body>
 </html>
+
