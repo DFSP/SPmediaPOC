@@ -248,14 +248,14 @@
             </button>
         </div>
 
-        <div class="scrolling-banner-container bg-red-100/50 text-red-600 dark:bg-red-900/50 dark:text-red-300 fixed bottom-0 left-0 z-30">
+<div class="scrolling-banner-container bg-red-100/50 text-red-600 dark:bg-red-900/50 dark:text-red-300 fixed bottom-0 left-0 z-30">
             <div class="scrolling-banner-content py-1 text-xs font-semibold">
                 <span>디지털퍼스트 내부 배포 자료입니다. URL외부 공유 금지.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
             </div>
         </div>
     </div>
 
-<script>
+    <script>
         document.addEventListener('DOMContentLoaded', () => {
             const canvas = document.getElementById('snow-canvas');
             const ctx = canvas.getContext('2d');
@@ -269,6 +269,13 @@
             const maxSnowflakes = window.innerWidth < 768 ? 50 : 100;
             const snowflakes = [];
 
+            // 용산구 좌표 (디지털퍼스트 근처)
+            const LAT = 37.5326;
+            const LNG = 126.9900;
+            
+            // ★ 중요: 테스트할 때는 true로 변경, 배포할 때는 false로 설정하세요!
+            const FORCE_SNOW_TEST = false; 
+
             class Snowflake {
                 constructor() {
                     this.reset();
@@ -277,7 +284,7 @@
                 reset() {
                     this.x = Math.random() * width;
                     this.y = Math.random() * height;
-                    this.radius = Math.random() * 2 + 1; // 눈 크기 1~3px
+                    this.radius = Math.random() * 2 + 1; // 눈 크기
                     this.speed = Math.random() * 1 + 0.5; // 속도
                     this.wind = Math.random() * 0.5 - 0.25; // 바람
                     this.opacity = Math.random() * 0.5 + 0.3; // 투명도
@@ -319,20 +326,53 @@
                 requestAnimationFrame(animateSnow);
             }
 
+            // [핵심 기능] Open-Meteo API로 날씨 체크
+            async function checkWeatherAndStart() {
+                // 테스트 모드일 경우 무조건 눈 내림
+                if (FORCE_SNOW_TEST) {
+                    console.log("🧪 테스트 모드: 강제로 눈을 내리게 합니다.");
+                    initSnow();
+                    animateSnow();
+                    return;
+                }
+
+                try {
+                    // 용산구 현재 날씨 요청
+                    const url = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LNG}&current_weather=true`;
+                    const response = await fetch(url);
+                    const data = await response.json();
+                    
+                    // WMO 기상 코드 (눈 관련 코드들: 71, 73, 75, 77, 85, 86)
+                    const snowCodes = [71, 73, 75, 77, 85, 86]; 
+                    const currentWeatherCode = data.current_weather.weathercode;
+
+                    console.log(`📍 용산구 현재 날씨 코드: ${currentWeatherCode}`);
+
+                    if (snowCodes.includes(currentWeatherCode)) {
+                        console.log("☃️ 와! 지금 용산구에 눈이 오네요. 눈 효과를 켭니다.");
+                        initSnow();
+                        animateSnow();
+                    } else {
+                        console.log("☀️ 지금은 눈이 오지 않습니다. (눈 효과 꺼짐)");
+                        ctx.clearRect(0, 0, width, height);
+                    }
+
+                } catch (error) {
+                    console.error("날씨 정보를 가져오는 중 오류 발생:", error);
+                }
+            }
+
             window.addEventListener('resize', () => {
                 width = window.innerWidth;
                 height = window.innerHeight;
                 canvas.width = width;
                 canvas.height = height;
-                snowflakes.length = 0;
-                initSnow();
             });
 
-            initSnow();
-            animateSnow();
+            // 날씨 체크 및 시작
+            checkWeatherAndStart();
         });
     </script>
-
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
