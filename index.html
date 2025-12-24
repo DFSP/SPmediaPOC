@@ -190,11 +190,17 @@
                             <div>
                                 <label class="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-2">카테고리 선택 (중복 가능)</label>
                                 <div id="category-tags-container" class="flex flex-wrap gap-2">
-                                </div>
-                            </div>
-                        </div>
+</div>
+                </div>
+            </div>
 
-                <div id="add-new-button-wrapper" class="mb-6 text-right hidden space-x-2">
+
+            <div id="add-new-button-wrapper" class="mb-6 flex justify-between items-end hidden">
+                <span id="total-media-count" class="text-sm font-bold text-gray-500 dark:text-gray-400 mb-2">
+                    등록 매체 로딩 중...
+                </span>
+
+                <div class="flex space-x-2">
                     <button id="add-new-card-button" class="bg-blue-600 text-white font-bold text-sm py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors shadow-md inline-flex items-center">
                         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
                         신규 추가
@@ -205,9 +211,9 @@
                         매체 정보 등록/수정 요청
                     </a>
                 </div>
-
-                <div id="media-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                </div>
+            </div>
+            <div id="media-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            </div>
                 
                 <div id="no-results" class="text-center py-16 px-6 bg-white dark:bg-gray-800 rounded-xl shadow-md hidden transition-colors duration-300">
                     <svg class="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
@@ -401,6 +407,7 @@
             const copyAllButton = document.getElementById('copy-all-button');
             const copyAllContainer = document.getElementById('copy-all-container');
             const addNewCardButtonWrapper = document.getElementById('add-new-button-wrapper');
+	    const totalMediaCountEl = document.getElementById('total-media-count');
             const addNewCardButton = document.getElementById('add-new-card-button');
             const scrollTopBtn = document.getElementById('scroll-to-top');
             const scrollBottomBtn = document.getElementById('scroll-to-bottom');
@@ -574,6 +581,15 @@
                 const hasContentToShow = mediaList.hasChildNodes();
                 noResults.classList.toggle('hidden', hasContentToShow);
                 copyAllContainer.classList.toggle('hidden', !hasContentToShow || !!newCard);
+
+		if (totalMediaCountEl) {
+                    // mediaData.length: 전체 데이터 수 (검색해도 안 변함)
+                    // data.length: 현재 화면에 보이는 데이터 수 (검색하면 변함)
+                    // 요청하신 '등록 매체 총 개수'는 mediaData.length가 적합합니다.
+                    totalMediaCountEl.textContent = `등록 매체 총 ${mediaData.length}개`;
+                }
+
+
             }
                     
             function filterAndRender() {
@@ -1251,5 +1267,3 @@
     </script>
 </body>
 </html>
-
-
