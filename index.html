@@ -449,13 +449,14 @@
                 return text.split('').map(char => keyMap[char] || char);
             }
 
-            // ✅ 스크립트 수정 완료 (에러 방지 버전)
+// ✅ [수정됨] initializeScrollingBanners 함수 (배너 멈춤 해결 버전)
             function initializeScrollingBanners() {
                 const banners = document.querySelectorAll('.scrolling-banner-container');
                 
                 banners.forEach(banner => {
-                    // 화면에 보이지 않는 요소(display: none)라면 계산하지 않고 종료
-                    if (banner.offsetParent === null) return;
+                    // [수정 포인트] offsetParent 대신 실제 크기를 체크합니다.
+                    // fixed 요소도 크기가 있다면(0이 아니라면) 애니메이션을 실행합니다.
+                    if (banner.offsetWidth === 0 && banner.offsetHeight === 0) return;
 
                     const content = banner.querySelector('.scrolling-banner-content');
                     const templateSpan = content ? content.querySelector('span') : null;
@@ -476,7 +477,7 @@
                             return;
                         }
             
-                        // 재시도 후에도 0이면 조용히 종료 (에러 로그 제거)
+                        // 재시도 후에도 0이면 종료
                         if (bannerWidth === 0 || spanWidth === 0) {
                             return; 
                         }
@@ -1267,3 +1268,4 @@
     </script>
 </body>
 </html>
+
